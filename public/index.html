@@ -1,54 +1,138 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <title>Paper-Trade</title>
-  <style>
-    :root{color-scheme:dark;--bg:#0b101b;--panel:#121d2d;--panel2:#162337;--line:#293a50;--ink:#edf3fb;--muted:#9eb1c8;--accent:#79b9f8;--green:#6ee7ba;--red:#ff8e9d;--amber:#ffd286}
-    *{box-sizing:border-box}body{margin:0;font:14px/1.48 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:radial-gradient(circle at 80% 0%,#18334d 0,transparent 35%),var(--bg)}
-    a{color:var(--accent)}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.46}
-    .wrap{max-width:1280px;margin:auto;padding:25px 24px 60px}.top{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;flex-wrap:wrap}
-    .eyebrow{text-transform:uppercase;letter-spacing:.15em;font-size:11px;font-weight:800;color:var(--accent)}h1{font-size:clamp(27px,4vw,41px);margin:2px 0 6px;letter-spacing:-.035em}h2{font-size:20px;margin:0 0 10px}
-    p{margin:6px 0;color:var(--muted)}.subtitle{max-width:760px}.top-actions{display:flex;align-items:center;gap:8px}.pill{font-size:11px;border:1px solid var(--line);color:var(--muted);padding:5px 10px;border-radius:99px;letter-spacing:.03em}
-    .live-tag{background:#13372f;border-color:#255748;color:var(--green)}.btn{background:var(--panel2);color:var(--ink);border:1px solid #36506b;border-radius:9px;padding:9px 13px;font-weight:650}
-    .btn:hover:not(:disabled){border-color:var(--accent);background:#213b56}.btn.primary{background:#195187;border-color:#2d79ba}.btn.danger{background:#552d39;border-color:#965264}.btn.good{background:#19483e;border-color:#348d72}
-    .tabs{display:flex;gap:9px;margin:22px 0 18px;border-bottom:1px solid var(--line);padding-bottom:12px;overflow-x:auto}
-    .tab{white-space:nowrap;background:transparent;color:var(--muted);border:1px solid transparent;border-radius:10px;padding:10px 13px;font-weight:750}
-    .tab[aria-selected=true]{color:var(--ink);border-color:#35608c;background:#1a334d}.hint{font-size:12px;color:var(--muted)}
-    .banner{border:1px solid #466480;border-radius:12px;padding:10px 15px;background:#183047;margin:14px 0}
-    .card{border:1px solid var(--line);background:var(--panel);border-radius:13px;padding:17px;margin-bottom:14px;min-width:0;box-shadow:0 8px 30px #0002}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-    .metric .name{color:var(--muted);font-size:12px}.metric .value{font-size:25px;font-weight:780;margin:6px 0 1px;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
-    .positive{color:var(--green)!important}.negative{color:var(--red)!important}.neutral{color:var(--ink)}.quiet{font-size:12px;color:var(--muted)}
-    .scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:650px}th{text-transform:uppercase;letter-spacing:.07em;font-size:10px;text-align:left;color:var(--muted);font-weight:780}th,td{border-bottom:1px solid #25364b;padding:9px 10px;vertical-align:middle}td{font-variant-numeric:tabular-nums}tbody tr:last-child td{border-bottom:0}th.num,td.num{text-align:right}
-    .field{width:64px;background:#101b29;border:1px solid #40556d;border-radius:8px;color:var(--ink);padding:7px 6px;text-align:center}
-    .manual-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}.manual-controls .btn{padding:7px 8px;font-size:12px}
-    .foot{margin-top:24px;color:var(--muted);font-size:12px}.error{color:var(--red)}.loading{padding:50px 8px;text-align:center;color:var(--muted)}
-    svg text{fill:var(--muted);font-size:11px}
-    @media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:520px){.wrap{padding:17px 12px 38px}.metric .value{font-size:21px}.top-actions{width:100%}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Paper-Trade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<!-- Coin Zones' own stylesheet, unchanged, so this page looks like the board -->
+<style>
+/* Layout: coin rail on the left, one board per coin on the right; stacked with a chip strip on phones. */
+:root{
+  --bg:#f3f5f8; --panel:#ffffff; --ink:#12202c; --muted:#586878; --line:#dce2e9; --soft:#eaeef3;
+  --sup:#0d8a5c; --sup-bg:#e3f4ec; --res:#c0410f; --res-bg:#fbe9df; --acc:#2557d6; --acc-bg:#e4ebfb;
+  --warn:#9a6700; --warn-bg:#fff3cd; --bad:#b42318;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e141a; --panel:#151d25; --ink:#e5ecf3; --muted:#92a3b4; --line:#26323d; --soft:#1c2630;
+  --sup:#41d09a; --sup-bg:#0f2d24; --res:#ff9265; --res-bg:#33211a; --acc:#7ba5ff; --acc-bg:#182643;
+  --warn:#f2c14e; --warn-bg:#33290f; --bad:#ff7b72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e141a; --panel:#151d25; --ink:#e5ecf3; --muted:#92a3b4; --line:#26323d; --soft:#1c2630;
+  --sup:#41d09a; --sup-bg:#0f2d24; --res:#ff9265; --res-bg:#33211a; --acc:#7ba5ff; --acc-bg:#182643;
+  --warn:#f2c14e; --warn-bg:#33290f; --bad:#ff7b72; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+h2{font-size:16px;font-weight:600;margin:0 0 10px}
+h3{font-size:13px;font-weight:600;margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+a{color:var(--acc)}
+.num,td.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.sub{color:var(--muted);font-size:13px}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:500;background:var(--soft);color:var(--muted);white-space:nowrap}
+.pill.sup{background:var(--sup-bg);color:var(--sup)} .pill.res{background:var(--res-bg);color:var(--res)}
+.pill.acc{background:var(--acc-bg);color:var(--acc)} .pill.warn{background:var(--warn-bg);color:var(--warn)}
+.prog{height:6px;background:var(--soft);border-radius:99px;overflow:hidden;margin:0 0 6px}.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+.chip.main{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}.chip:disabled{opacity:.6;cursor:default}
+.banner{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px}
+.layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:18px;align-items:start}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);max-height:calc(100vh - 24px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px}
+.rail button{display:flex;width:100%;gap:8px;align-items:center;justify-content:space-between;background:none;border:0;color:var(--ink);font:inherit;padding:6px 8px;border-radius:6px;cursor:pointer;text-align:left}
+.rail button:hover{background:var(--soft)} .rail button[aria-current="true"]{background:var(--acc-bg);color:var(--acc);font-weight:600}
+.rail .home{font-weight:600;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;margin-bottom:4px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+.dot.sup{background:var(--sup)} .dot.res{background:var(--res)} .dot.both{background:linear-gradient(90deg,var(--sup) 50%,var(--res) 50%)} .dot.none{background:var(--muted);opacity:.5}
+.strip{display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.grow{flex:1 1 auto;min-width:0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:12px;white-space:nowrap}
+th.sortable{cursor:pointer;user-select:none} th.sortable:hover{color:var(--ink)}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--soft)}
+td.r,th.r{text-align:right}
+.up{color:var(--sup)} .down{color:var(--res)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:4px 11px;border-radius:999px;font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+input.search{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:5px 10px;font:inherit;width:140px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:inherit;font-weight:500;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--acc);border-bottom-color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.kv div{background:var(--soft);border-radius:8px;padding:8px 10px}
+.kv b{display:block;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.kv span{font-family:var(--mono);font-size:15px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.zrow{border-left:4px solid var(--line);padding:8px 12px;margin-bottom:10px;background:var(--panel);border-radius:0 8px 8px 0;border:1px solid var(--line);border-left-width:4px}
+.zrow.S{border-left-color:var(--sup)} .zrow.R{border-left-color:var(--res)} .zrow.watch{opacity:.8;border-style:dashed;border-left-style:solid}
+.zrow summary{cursor:pointer;list-style:none} .zrow summary::-webkit-details-marker{display:none}
+.zrow ul{margin:8px 0 0;padding-left:18px;color:var(--muted)}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:0 6px;border-radius:4px;background:var(--soft);color:var(--muted);margin-right:3px}
+.flag{background:var(--warn-bg);color:var(--warn)}
+.note{color:var(--muted);font-size:12.5px}
+.bad{color:var(--bad)} .good{color:var(--sup)}
+.plan h2{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.reasons{margin:8px 0 0;padding:0;list-style:none}
+.reasons li{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px;padding:5px 0;border-top:1px solid var(--line)}
+.reasons b{font-weight:600;font-size:12.5px}
+svg text{fill:var(--ink);font-family:var(--mono);font-size:11px}
+svg .m{fill:var(--muted)}
+footer{margin-top:24px;color:var(--muted);font-size:12.5px}
+details.how{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:14px}
+details.how summary{cursor:pointer;font-weight:600}
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr)} .rail{display:none}
+  .strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px}
+  .strip button{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:4px 11px;font:inherit;font-size:13px;display:flex;gap:6px;align-items:center;cursor:pointer}
+  .strip button[aria-current="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+  .reasons li{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}}
+</style>
+<style>
+/* Paper-Trade additions, in the board's style */
+.act{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
+.act input{width:52px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:3px 6px;font:inherit;font-size:13px;text-align:right}
+.act .chip{padding:3px 10px}
+.chip.sell{border-color:var(--res);color:var(--res)} .chip.book{border-color:var(--sup);color:var(--sup)}
+[hidden]{display:none!important}
+</style>
 </head>
 <body>
- <main class="wrap">
-  <div class="top">
-   <div><div class="eyebrow">Fresh paper trading · closed 4H candles</div>
-    <h1>Paper-Trade <span class="pill live-tag">PAPER ONLY</span></h1>
-    <p class="subtitle">Three separate paper accounts started fresh, with nothing carried over from Coin Zones or Paper-Test. They use the same rules as Coin Zones. No orders go to any exchange.</p>
-    <div class="hint"><a href="/">← All dashboards</a></div>
-   </div>
-   <div class="top-actions"><span id="role" class="pill">View only</span><button id="refresh" class="btn primary" hidden title="Rebuild from the candles already saved in Market-Data">Refresh</button></div>
-  </div>
-  <div id="fresh" class="banner" role="status">Loading…</div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Paper-Trade</h1>
+      <div class="sub" id="meta">Loading...</div>
+    </div>
+    <div class="row"><span class="pill acc">Paper only</span><span class="pill" id="who" hidden></span></div>
+  </header>
+  <div id="banner" class="banner" hidden></div>
   <div class="tabs" role="tablist" aria-label="Paper accounts">
-   <button class="tab" type="button" role="tab" data-tab="zone" aria-selected="true">01 · Top 20 P&amp;L — without MSS</button>
-   <button class="tab" type="button" role="tab" data-tab="mss" aria-selected="false">02 · Top 20 P&amp;L — with MSS</button>
-   <button class="tab" type="button" role="tab" data-tab="s083" aria-selected="false">03 · s083 Participation Regime</button>
+    <button type="button" role="tab" data-tab="zone" aria-selected="true">01 · Top 20 P&amp;L — without MSS</button>
+    <button type="button" role="tab" data-tab="mss" aria-selected="false">02 · Top 20 P&amp;L — with MSS</button>
+    <button type="button" role="tab" data-tab="s083" aria-selected="false">03 · s083 Participation Regime</button>
   </div>
-  <div id="content" class="loading">Loading…</div>
-  <div class="foot">Paper results only, not financial advice. Manual closes and bookings fill at the last closed 4H candle's close, not a live price. Owner controls work only after signing in through the home site.</div>
- </main>
- <script src="app.js" defer></script>
+  <main id="main" aria-live="polite"><div class="card"><p class="note">Loading...</p></div></main>
+  <details class="how">
+    <summary>How these paper accounts work</summary>
+    <p class="note"><b>Fresh start.</b> All three accounts began empty at the start time shown above. No trades, advice or results were carried over from Coin Zones or anywhere else.</p>
+    <p class="note"><b>Same rules as Coin Zones.</b> Tabs 01 and 02 replay the board's own spot-setup advice with the board's own paper-test rules. Tab 02 buys only when a 4H market structure shift up comes from the buy zone. Tab 03 is the s083 rule from the board's Strategy test. Everything uses closed 4H candles from the shared Market-Data store and is rebuilt when new candles arrive, once a day, or when you press Refresh.</p>
+    <p class="note"><b>Your buttons (owner only).</b> <b>Close all</b> sells what is left of a position. <b>Book %</b> sells that share of what is left and needs it to be in profit after fees. Both fill at the close of the last closed 4H candle, never at a live price, and change only that tab. Each request is checked again by the build; if a new candle has closed or the position changed, it is refused and nothing happens.</p>
+    <p class="note">Paper results, not financial advice.</p>
+  </details>
+  <footer id="foot"></footer>
+</div>
+<script src="cloud.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

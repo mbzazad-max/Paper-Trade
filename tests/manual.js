@@ -1,57 +1,52 @@
-/* Manual Close all / Book % rules on made-up candles (no Market-Data needed).
+/* Close all / Book % rules of build/ledger.js on made-up candles (no Market-Data needed).
    usage: node tests/manual.js */
 'use strict';
-const assert = require('assert/strict'), path = require('path');
-const MANUAL = require('../build/zone-manual.js'), PNL = require('../public/pnl.js'), { runCoin } = require('../build/s083-paper.js');
+const assert = require('assert/strict'), L = require('../build/ledger.js'), { signal } = require('../build/stratlab.js');
 const H4 = 14400, T0 = 1795000000 - (1795000000 % H4);
 const near = (a, b, m) => assert(Math.abs(a - b) < 1e-6, m + ': ' + a + ' vs ' + b);
 
-// ---- zone / MSS ledger ----
+// ---- Top 20 (both tabs) ----
 {
-  const bars = (rows) => ({ t: rows.map((_, i) => T0 + i * H4), o: rows.map((r) => r[0]), h: rows.map((r) => r[1]), l: rows.map((r) => r[2]), c: rows.map((r) => r[3]) });
-  const B = bars([[105, 106, 104, 105], [104, 105, 99, 100.1], [101, 111, 100, 110], [110, 112, 108, 111], [111, 121, 110, 119], [119, 125, 117, 124]]);
-  const snaps = [{ t: T0, entry: 100, stop: 90, t1: 120, t2: 140, rr1: 2, rr2: 4 }];
-  const cfg = { start: T0, end: T0 + 100 * H4, size: 1000, fee: 0.1, cohort: ['AAA'] }, st = { cfg, snaps: { AAA: { snaps } }, bars: { AAA: B } };
+  // candle: [open, high, low, close]; advice: buy 100, stop 90, T1 120, T2 140
+  const rows = [[105, 106, 104, 105], [104, 105, 99, 100.1], [101, 111, 100, 110], [110, 112, 108, 111], [111, 121, 110, 119], [119, 141, 117, 139]];
+  const B = { t: rows.map((_, i) => T0 + i * H4), o: rows.map((x) => x[0]), h: rows.map((x) => x[1]), l: rows.map((x) => x[2]), c: rows.map((x) => x[3]) };
+  const st = { cfg: { cohort: ['AAA'], start: T0, end: T0 + 99 * H4, size: 1000, fee: 0.1 }, snaps: { AAA: { snaps: [{ t: T0, entry: 100, stop: 90, t1: 120, t2: 140, rr2: 4 }] } }, bars: { AAA: B } };
   for (const mode of ['zone', 'mss']) {
-    const base = MANUAL.run(st, [], mode);
-    MANUAL.parity(PNL.run(st, {}), base, mode);                          // no actions = unchanged pnl.js
-    const pos = base.coins[0].open; assert(pos && pos.half, mode + ': filled at 100 and T1 taken');
-    // book 50% at the close of candle 2 (110), before T1 is reached
-    const id = MANUAL.tradeId(mode, 'AAA', { snapT: T0, entryT: T0 + H4 });
-    const ev = [{ nonce: 'n1', mode, sym: 'AAA', kind: 'book', percent: 50, trade_id: id, t: T0 + 3 * H4, px: 110 }];
-    const a = MANUAL.run(st, ev, mode), c = a.coins[0];
-    assert.deepEqual(c.applied, ['n1']);
-    assert.equal(c.manual_log[0].action, 'profit_booking'); near(c.manual_log[0].remaining_pct, 50, 'half left');
-    // T1 then takes the other half (min(50% of qty, what is left)) and the trade ends
-    assert(!c.open && c.trades.length === 1 && c.trades[0].out === 'T1', mode + ': ends at T1 after a 50% booking');
-    // the other mode is not touched by this action
-    const other = mode === 'zone' ? 'mss' : 'zone'; assert.deepEqual(MANUAL.run(st, ev, other).coins[0].applied, []);
-    // close all at candle 3 (111)
-    const cl = MANUAL.run(st, [{ nonce: 'n2', mode, sym: 'AAA', kind: 'close', percent: 100, trade_id: id, t: T0 + 4 * H4, px: 111 }], mode).coins[0];
-    assert(!cl.open && cl.trades[0].out === 'manual_close');
-    // a booking on a trade that is not in net profit, or on the wrong trade, is refused
-    assert.throws(() => MANUAL.run(st, [{ nonce: 'n3', mode, sym: 'AAA', kind: 'book', percent: 50, trade_id: id, t: T0 + 2 * H4 }], mode), /positive NET/);
-    assert.throws(() => MANUAL.run(st, [{ nonce: 'n4', mode, sym: 'AAA', kind: 'close', percent: 100, trade_id: 'x', t: T0 + 3 * H4 }], mode), /stale/);
+    const id = L.topId(mode, 'AAA', T0 + H4), run = (acts) => L.runTop20(mode, st, acts).coins[0];
+    const plain = run([]); assert(plain.trades[0].out === 'T1 + T2', mode + ': no action, T1 then T2');
+    // Book 40% at the close of candle 2 (110): 60% left; T1 sells half of that (30%), T2 the last 30%
+    const b = run([{ nonce: 'a1', mode, sym: 'AAA', kind: 'book', percent: 40, trade_id: id, t: T0 + 3 * H4 }]), tr = b.trades[0];
+    assert.deepEqual(tr.legs.map((x) => [x.why, Math.round(x.q / tr.qty * 100), x.px]), [['Book 40%', 40, 110], ['T1', 30, 120], ['T2', 30, 140]]);
+    near(b.log[0].usd, 4 * (110 - 100) - 4 * 210 * 0.001, 'booked part P&L after fees');
+    // Close all at the close of candle 3 (111): nothing left, trade ends there, no T1/T2 afterwards
+    const c = run([{ nonce: 'a2', mode, sym: 'AAA', kind: 'close', percent: 100, trade_id: id, t: T0 + 4 * H4 }]);
+    assert(!c.open && c.trades.length === 1 && c.trades[0].out === 'Close all' && c.trades[0].exitT === T0 + 4 * H4);
+    near(c.trades[0].pnl, 10 * 11 - 1000 * 0.001 - 10 * 111 * 0.001, 'close all P&L after fees');
+    // refused: booking while not in profit after fees (close 100.1), an unknown trade, an action never reached
+    assert.throws(() => run([{ nonce: 'a3', mode, sym: 'AAA', kind: 'book', percent: 50, trade_id: id, t: T0 + 2 * H4 }]), /not in net profit/);
+    assert.throws(() => run([{ nonce: 'a4', mode, sym: 'AAA', kind: 'close', trade_id: 'x', t: T0 + 3 * H4 }]), /does not match/);
+    assert.throws(() => run([{ nonce: 'a5', mode, sym: 'AAA', kind: 'close', trade_id: id, t: T0 + 50 * H4 }]), /never applied/);
   }
+  // an action in one tab does not touch the other
+  const z = L.runTop20('zone', st, []).coins[0], m = L.runTop20('mss', st, [{ nonce: 'b1', mode: 'mss', sym: 'AAA', kind: 'close', trade_id: L.topId('mss', 'AAA', T0 + H4), t: T0 + 4 * H4 }]).coins[0];
+  assert.equal(z.trades[0].out, 'T1 + T2'); assert.equal(m.trades[0].out, 'Close all');
 }
 
-// ---- s083 ledger ----
+// ---- s083 ----
 {
-  const n = 60, B = { t: [], c: [], v: [] };
-  for (let i = 0; i < n; i++) { B.t.push(T0 + i * H4); B.v.push(i + 1); B.c.push(i < 25 ? 100 + i : i < 40 ? 124 - 2 * (i - 24) : 94 + 3 * (i - 39)); }
-  const cfg = { params: { vfast: 2, vslow: 4, mom: 2 }, size: 1000, fee: 0.1, join_open_regime: false };
-  const start = B.t[10] + H4;                                          // the regime is long at the start
-  const a = runCoin('AAA', B, cfg, start, []);
-  assert(a.trades.length >= 1 && a.trades[0].side === -1, 'first trade is the next new signal (short), not the long standing at the start');
-  assert(a.trades.every((t) => t.entry_t > start));
-  const joined = runCoin('AAA', B, { ...cfg, join_open_regime: true }, start, []);
-  assert.equal(joined.trades[0].entry_t, start, 'with the switch on it joins at the start');
-  // book 40% of the short while in profit, then close all: the short is not reopened until the signal changes
+  const B = { t: [], c: [], v: [] };
+  for (let i = 0; i < 60; i++) { B.t.push(T0 + i * H4); B.v.push(i + 1); B.c.push(i < 25 ? 100 + i : i < 40 ? 124 - 2 * (i - 24) : 94 + 3 * (i - 39)); }
+  const sig = signal(B, { vfast: 2, vslow: 4, mom: 2 }).sig, opt = { size: 1000, fee: 0.1, join: false }, start = B.t[10] + H4;
+  const a = L.runS083('AAA', B, sig, opt, start, []);
+  assert(a.trades[0].side === -1 && a.trades[0].entry_t > start, 'fresh start: the long standing at the start is not taken; first trade is the next new signal');
+  assert.equal(L.runS083('AAA', B, sig, { ...opt, join: true }, start, []).trades[0].entry_t, start, 'join=true takes it at the start');
   const sh = a.trades[0], k = B.t.findIndex((t) => t + H4 === sh.entry_t), tb = B.t[k + 3] + H4, tc = B.t[k + 5] + H4;
-  const b = runCoin('AAA', B, cfg, start, [{ nonce: 's1', sym: 'AAA', kind: 'book', percent: 40, trade_id: sh.id, t: tb }, { nonce: 's2', sym: 'AAA', kind: 'close', percent: 100, trade_id: sh.id, t: tc }]);
-  const t1 = b.trades[0]; assert.equal(t1.reason, 'manual_close'); assert.equal(t1.legs.length, 2); near(t1.legs[0].pct, 40, 'booked 40%'); near(t1.legs[1].pct, 60, 'closed the remaining 60%');
-  const nx = b.trades[1] || b.open; assert(nx && nx.side === 1 && nx.entry_t > B.t[39], 'no new short after Close all; next trade is the long');
-  assert(t1.usd > 0);
-  assert.throws(() => runCoin('AAA', B, cfg, start, [{ nonce: 's3', sym: 'AAA', kind: 'book', percent: 40, trade_id: 'AAA:1:1', t: tb }]), /no longer matches/);
+  const b = L.runS083('AAA', B, sig, opt, start, [{ nonce: 's1', sym: 'AAA', kind: 'book', percent: 40, trade_id: sh.id, t: tb }, { nonce: 's2', sym: 'AAA', kind: 'close', trade_id: sh.id, t: tc }]);
+  const t1 = b.trades[0];
+  assert.deepEqual(t1.parts.map((p) => [p.why, Math.round(p.pct)]), [['Book 40%', 40], ['Close all', 60]]);
+  assert(t1.usd > 0 && t1.exit_t === tc);
+  const next = b.trades[1] || b.open; assert(next && next.side === 1 && next.entry_t > B.t[39], 'after Close all no new short; the next trade is the long');
+  assert.throws(() => L.runS083('AAA', B, sig, opt, start, [{ nonce: 's3', sym: 'AAA', kind: 'book', percent: 40, trade_id: sh.id, t: sh.entry_t }]), /not in profit/);
+  assert.throws(() => L.runS083('AAA', B, sig, opt, start, [{ nonce: 's4', sym: 'AAA', kind: 'close', trade_id: 'AAA:L:1', t: tb }]), /does not match/);
 }
 console.log('manual rules: ok');

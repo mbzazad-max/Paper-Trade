@@ -1,15 +1,14 @@
-/* Paper-Trade Worker: serves the built page (static files) and the owner endpoints. Adapted from the coin-zones and
-   Paper-Test Workers. It has no address of its own (workers_dev off); the home site (repo dashboards) passes
-   /paper-trade/... here for viewing and /api/paper-trade/... for the controls, which always stay behind the login.
-     GET  /api/access  -> {owner:true} (reaching it at all means the login passed) and whether GitHub control works
-     GET  /api/status  -> state of the latest build run
+/* Paper-Trade Worker: serves the built page (static files) and four small endpoints. Same pattern as the Coin Zones Worker.
+   It has no address of its own (workers_dev off): the home site (repo dashboards) passes /paper-trade/... here for viewing
+   and /api/paper-trade/... for the endpoints, which always stay behind the owner's login.
+     GET  /api/status  -> state of the latest build run (the page's Refresh button and progress use it)
      POST /api/refresh -> starts the build (unless one is already queued or running)
-     POST /api/trade   -> one Close all / Book N% action; the build checks it against the last closed 4H candle
+     GET  /api/owner   -> {owner:true} when reached (only the owner gets past the login) and whether GitHub answers
+     POST /api/action  -> one Close all / Book % request; the build checks it and fills it at the last closed 4H close
    Secret GITHUB_TOKEN: fine-grained token with Actions read/write on mbzazad-max/Paper-Trade. */
 const WF = 'build.yml';
-const COINS = ['BTC', 'ETH', 'BNB', 'XRP', 'SOL', 'ZEC', 'HYPE', 'DOGE', 'LINK', 'ADA', 'XLM', 'NEAR', 'UNI', 'LTC', 'SUI', 'GRAM', 'TAO', 'ENA', 'PEPE', 'AAVE', 'AVAX', 'ARB', 'RENDER', 'RAY', 'FET', 'WIF'];
-const S083 = ['BTC', 'ETH', 'BNB', 'SOL'];
-const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
+const TABS = { zone: 26, mss: 26, s083: 4 };
+const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 
 async function gh(env, path, init = {}) {
   return fetch('https://api.github.com/repos/' + env.GITHUB_REPO + path, { ...init, headers: {
@@ -22,47 +21,43 @@ async function latestRun(env) {
   const run = (await r.json()).workflow_runs[0];
   return run ? { status: run.status, conclusion: run.conclusion, started: run.run_started_at || run.created_at, updated: run.updated_at, event: run.event } : { status: 'none' };
 }
-async function dispatch(env, reason, payload) {
-  const r = await gh(env, `/actions/workflows/${WF}/dispatches`, { method: 'POST', body: JSON.stringify({ ref: 'main', inputs: { reason, payload: payload || '' } }) });
-  if (r.status !== 204) throw new Error('GitHub refused the request (' + r.status + ')');
+async function start(env, inputs) {
+  const cur = await latestRun(env);
+  if (cur.status === 'queued' || cur.status === 'in_progress') return json({ error: 'An update is already running; try again when it has finished.', run: cur }, 409);
+  const r = await gh(env, `/actions/workflows/${WF}/dispatches`, { method: 'POST', body: JSON.stringify({ ref: 'main', inputs }) });
+  if (r.status !== 204) return json({ error: 'GitHub refused the request (' + r.status + ')' }, 502);
+  return json({ state: 'started' }, 202);
 }
-function checkAction(p) {
-  if (!p || typeof p !== 'object') return null;
-  const base = typeof p.nonce === 'string' && /^[A-Za-z0-9_-]{12,100}$/.test(p.nonce) && ['close', 'book'].includes(p.kind)
-    && typeof p.trade_id === 'string' && p.trade_id.length >= 8 && p.trade_id.length <= 120
-    && Number.isInteger(p.event_count) && p.event_count >= 0 && Number.isInteger(p.last_close)
-    && (p.kind === 'close' || (Number.isInteger(p.percent) && p.percent >= 1 && p.percent <= 99));
-  if (!base) return null;
-  const out = { strategy: p.strategy, sym: p.sym, kind: p.kind, percent: p.kind === 'close' ? 100 : p.percent, nonce: p.nonce, trade_id: p.trade_id, event_count: p.event_count, last_close: p.last_close };
-  if (p.strategy === 'zone_pnl' && ['zone', 'mss'].includes(p.mode) && COINS.includes(p.sym)) return { ...out, mode: p.mode };
-  if (p.strategy === 's083' && S083.includes(p.sym)) return out;
-  return null;
+/* only these fields, checked, are passed on; the build checks them again against the data */
+function action(p) {
+  if (!p || typeof p !== 'object' || !(p.tab in TABS) || !['close', 'book'].includes(p.kind)) return null;
+  if (typeof p.sym !== 'string' || !/^[A-Z0-9]{2,10}$/.test(p.sym) || typeof p.nonce !== 'string' || !/^[A-Za-z0-9]{16,64}$/.test(p.nonce)) return null;
+  if (typeof p.trade_id !== 'string' || p.trade_id.length > 80 || !Number.isInteger(p.journal_count) || !Number.isInteger(p.last_close)) return null;
+  if (p.kind === 'book' && !(Number.isInteger(p.percent) && p.percent >= 1 && p.percent <= 99)) return null;
+  return { tab: p.tab, sym: p.sym, kind: p.kind, percent: p.kind === 'book' ? p.percent : 100, nonce: p.nonce, trade_id: p.trade_id, journal_count: p.journal_count, last_close: p.last_close };
 }
 
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(req);
-    if (url.pathname === '/api/access' && req.method === 'GET') {
-      if (!env.GITHUB_TOKEN) return json({ owner: true, actions_ready: false, error: 'the GitHub control token is not set' });
-      try { return json({ owner: true, actions_ready: true, workflow: await latestRun(env) }); }
-      catch (e) { return json({ owner: true, actions_ready: false, error: String(e.message || e) }); }
+    if (url.pathname === '/api/owner' && req.method === 'GET') {
+      if (!env.GITHUB_TOKEN) return json({ owner: true, ready: false, why: 'the GitHub token is not set on the Worker' });
+      try { await latestRun(env); return json({ owner: true, ready: true }); } catch (e) { return json({ owner: true, ready: false, why: String(e.message || e) }); }
     }
-    if (!env.GITHUB_TOKEN) return json({ error: 'Owner controls are not set up yet (missing GITHUB_TOKEN).' }, 503);
+    if (!env.GITHUB_TOKEN) return json({ error: 'Controls are not set up yet (missing GITHUB_TOKEN).' }, 503);
     try {
       if (url.pathname === '/api/status' && req.method === 'GET') return json(await latestRun(env));
-      if (req.method === 'POST' && (url.pathname === '/api/refresh' || url.pathname === '/api/trade')) {
+      if (req.method === 'POST') {
         const origin = req.headers.get('origin');
         if (origin && new URL(origin).host !== url.host) return json({ error: 'Wrong origin' }, 403);
-        const cur = await latestRun(env);
-        if (cur.status === 'queued' || cur.status === 'in_progress') return json({ error: 'An update is already running. Try again when it finishes.', run: cur }, 409);
-        if (url.pathname === '/api/refresh') { await dispatch(env, 'Refresh button', ''); return json({ state: 'started' }, 202); }
-        if (!(req.headers.get('content-type') || '').toLowerCase().startsWith('application/json')) return json({ error: 'JSON required' }, 415);
-        const raw = await req.text(); if (raw.length > 2048) return json({ error: 'Request too long' }, 400);
-        let p; try { p = JSON.parse(raw); } catch { return json({ error: 'Invalid JSON' }, 400); }
-        const a = checkAction(p); if (!a) return json({ error: 'Invalid paper-trade action' }, 400);
-        await dispatch(env, 'Owner ' + (a.mode || a.strategy) + ' ' + a.kind + ' ' + a.sym, JSON.stringify(a));
-        return json({ state: 'queued', note: 'Queued, not filled yet. The build checks it against the last closed 4H candle.' }, 202);
+        if (url.pathname === '/api/refresh') return start(env, { reason: 'Refresh button' });
+        if (url.pathname === '/api/action') {
+          const body = await req.text(); if (body.length > 1024) return json({ error: 'Request too long' }, 400);
+          let p; try { p = JSON.parse(body); } catch (e) { return json({ error: 'Not JSON' }, 400); }
+          const a = action(p); if (!a) return json({ error: 'Not a valid Close all / Book % request' }, 400);
+          return start(env, { reason: a.tab + ' ' + (a.kind === 'close' ? 'Close all' : 'Book ' + a.percent + '%') + ' ' + a.sym, payload: JSON.stringify(a) });
+        }
       }
       return json({ error: 'Not found' }, 404);
     } catch (e) { return json({ error: String(e.message || e) }, 502); }

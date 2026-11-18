@@ -20,7 +20,7 @@ const START = process.argv[3] ? Number(process.argv[3]) : Math.floor((lastClose 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-fresh-')), REPO = path.join(tmp, 'repo'), TMD = path.join(tmp, 'md');
 execFileSync('cp', ['-r', ROOT, REPO]); for (const x of ['.git', 'md', 'node_modules']) fs.rmSync(path.join(REPO, x), { recursive: true, force: true }); fs.rmSync(path.join(REPO, 'state', 'pnl'), { recursive: true, force: true });
 for (const f of ['paper.json', 's083-paper.json', 'pnl.json', 'structure.json', 'freshness.json']) fs.rmSync(path.join(REPO, 'public', f), { force: true });
-fs.writeFileSync(path.join(REPO, 'state/manual/zone-events.json'), '[]'); fs.writeFileSync(path.join(REPO, 'state/manual/events.json'), '[]');
+fs.writeFileSync(path.join(REPO, 'state/manual/top20.json'), '[]'); fs.writeFileSync(path.join(REPO, 'state/manual/s083.json'), '[]');
 const rd = (f) => JSON.parse(fs.readFileSync(path.join(REPO, f), 'utf8'));
 function cutMD(now) {                                   // Market-Data as it was at `now`: closed candles only
   const M = { series: {} };
@@ -38,7 +38,7 @@ function build(now, action) {
   cutMD(now);
   const steps = [['build/setup.js'], ['build/build.js', TMD], ['build/structure.js', TMD, '--from', new Date((START - 2 * DAY) * 1000).toISOString().slice(0, 10)]];
   if (action) steps.push(['build/apply-action.js', TMD]);
-  steps.push(['build/paper-output.js'], ['build/s083-paper.js', TMD]);
+  steps.push(['build/paper.js', TMD]);
   for (const a of steps) { const r = node(a.map((x, i) => (i ? x : path.join(REPO, x))), now, action && a[0] === 'build/apply-action.js' ? { PAPER_ACTION: JSON.stringify(action) } : {}); if (r.status) throw new Error(a[0] + ' failed at ' + now + ':\n' + r.stdout + r.stderr); }
 }
 function checkFresh() {
@@ -50,8 +50,8 @@ function checkFresh() {
     if (f.startsWith('b_')) o.t.forEach((t) => assert(t >= START, 'candle before start ' + f));
   }
   const pub = rd('public/pnl.json'); for (const [k, v] of Object.entries(pub)) if (k.startsWith('s_')) v.snaps.forEach((x) => assert(x.t >= START, 'MSS advice before start ' + k));
-  for (const c of p.per_coin) for (const m of ['zone', 'mss']) for (const t of c[m].trades.concat(c[m].open ? [c[m].open] : [])) assert(t.entry_t >= START, 'zone trade before start');
-  for (const sym of s.order) for (const t of s.coins[sym].trades.concat(s.coins[sym].open ? [s.coins[sym].open] : [])) assert(t.entry_t > START, 's083 joined the regime standing at the start (' + sym + ')');
+  for (const m of ['zone', 'mss']) { assert.match(p[m].sum.same_as_pnl_js, /coin/); for (const c of p[m].coins) for (const t of c.trades.concat(c.open ? [c.open] : [])) assert(t.entry_t >= START, 'trade before start'); }
+  for (const sym of s.coins) for (const t of s.per[sym].trades.concat(s.per[sym].open ? [s.per[sym].open] : [])) assert(t.entry_t > START, 's083 took the regime standing at the start (' + sym + ')');
   return { p, s };
 }
 
@@ -73,38 +73,38 @@ function checkFresh() {
   const { p, s } = last, cfg = rd('state/pnl/cfg.json');
   assert.equal(cfg.start, START); assert.equal(cfg.cohort.length, 26);
   // 4. s083 join switch: with it on, coins with a standing signal open exactly at the start
-  const S = require(path.join(REPO, 'build/s083-paper.js')), P = rd('config/paper.json');
-  P.s083.join_open_regime = true; fs.writeFileSync(path.join(REPO, 'config/paper.json'), JSON.stringify(P));
-  const joined = node(['-e', 'const S=require("./build/s083-paper.js");console.log(JSON.stringify(S.compute(process.argv[1],[])))', TMD], lastClose + 600);
-  const J = JSON.parse(joined.stdout); P.s083.join_open_regime = false; fs.writeFileSync(path.join(REPO, 'config/paper.json'), JSON.stringify(P));
-  const joinedAtStart = s.order.filter((y) => [].concat(J.coins[y].trades, J.coins[y].open ? [J.coins[y].open] : []).some((t) => t.entry_t === START));
-  // 5. manual actions on whatever is open
-  const acts = [];
-  const zr = p.per_coin.find((c) => c.zone.open), mr = p.per_coin.find((c) => c.mss.open), so = s.order.find((y) => s.coins[y].open);
-  const now = lastClose + 600;
-  if (zr) { build(now, { strategy: 'zone_pnl', mode: 'zone', sym: zr.sym, kind: 'close', percent: 100, nonce: 'test0000zone01', trade_id: zr.zone.open.id, event_count: 0, last_close: zr.zone.last_close }); acts.push('zone close ' + zr.sym); }
+  const P = rd('config/paper.json'); P.s083.join_open_regime = true; fs.writeFileSync(path.join(REPO, 'config/paper.json'), JSON.stringify(P));
+  build(lastClose + 600); const J = rd('public/s083-paper.json');
+  P.s083.join_open_regime = false; fs.writeFileSync(path.join(REPO, 'config/paper.json'), JSON.stringify(P)); build(lastClose + 600);
+  const joinedAtStart = J.coins.filter((y) => [].concat(J.per[y].trades, J.per[y].open ? [J.per[y].open] : []).some((t) => t.entry_t === START));
+  // 5. manual actions on whatever is open, through apply-action.js like the workflow does
+  const acts = [], now = lastClose + 600, nonce = (k) => 'test' + k + '0000000000000000';
+  const zr = p.zone.coins.find((c) => c.open), mr = p.mss.coins.find((c) => c.open), so = s.coins.find((y) => s.per[y].open);
+  let n083 = 0, nTop = 0;
+  if (zr) {
+    build(now, { tab: 'zone', sym: zr.sym, kind: 'close', percent: 100, nonce: nonce(1), trade_id: zr.open.id, journal_count: nTop++, last_close: zr.last_close }); acts.push('without MSS: Close all ' + zr.sym);
+    const q = rd('public/paper.json'); assert.equal(q.zone.coins.find((c) => c.sym === zr.sym).log.length, 1); assert(!q.zone.coins.find((c) => c.sym === zr.sym).open || q.zone.coins.find((c) => c.sym === zr.sym).open.id !== zr.open.id);
+    assert.equal(q.mss.coins.find((c) => c.sym === zr.sym).log.length, 0, 'an action leaked into the other tab');
+    assert.match(q.zone.sum.same_as_pnl_js, /without a manual action/);
+    // the same request again is ignored; a stale one (old journal count) is refused
+    assert.equal(node([path.join(REPO, 'build/apply-action.js'), TMD], now, { PAPER_ACTION: JSON.stringify({ tab: 'zone', sym: zr.sym, kind: 'close', percent: 100, nonce: nonce(1), trade_id: zr.open.id, journal_count: 0, last_close: zr.last_close }) }).status, 0);
+    assert.notEqual(node([path.join(REPO, 'build/apply-action.js'), TMD], now, { PAPER_ACTION: JSON.stringify({ tab: 'zone', sym: zr.sym, kind: 'close', percent: 100, nonce: nonce(2), trade_id: zr.open.id, journal_count: 0, last_close: zr.last_close }) }).status, 0, 'stale action accepted');
+  }
+  const zb = rd('public/paper.json').zone.coins.find((c) => c.open && (c.price - c.open.entry) - (c.price + c.open.entry) * 0.001 > 0);
+  if (zb) { build(now, { tab: 'zone', sym: zb.sym, kind: 'book', percent: 25, nonce: nonce(3), trade_id: zb.open.id, journal_count: nTop++, last_close: zb.last_close }); acts.push('without MSS: Book 25% ' + zb.sym);
+    assert(Math.abs(rd('public/paper.json').zone.coins.find((c) => c.sym === zb.sym).open.left_pct - 75) < 1e-6); }
+  if (mr) { build(now, { tab: 'mss', sym: mr.sym, kind: 'close', percent: 100, nonce: nonce(4), trade_id: mr.open.id, journal_count: nTop++, last_close: mr.last_close }); acts.push('with MSS: Close all ' + mr.sym); }
   if (so) {
-    const c = rd('public/s083-paper.json').coins[so], kind = c.open.unrealized > 0 ? 'book' : 'close';
-    build(now, { strategy: 's083', sym: so, kind, percent: 40, nonce: 'test0000s08301', trade_id: c.open.id, event_count: 0, last_close: c.last_close }); acts.push('s083 ' + kind + ' ' + so);
-    const after = rd('public/s083-paper.json').coins[so];
-    assert.equal(after.manual_log.filter((a) => a.action !== 'signal_exit').length, 1);
-    if (kind === 'book') assert(Math.abs(after.open.left_pct - 60) < 1e-6, 'book 40% should leave 60%'); else assert(!after.open && after.blocked_side, 'close all should block re-entry');
-  }
-  if (zr) {
-    const q = rd('public/paper.json'), row = q.per_coin.find((c) => c.sym === zr.sym);
-    assert.equal(row.zone.manual_log.length, 1); assert.equal(row.mss.manual_log.length, 0, 'a zone action leaked into the MSS tab');
-    assert(!row.zone.open || row.zone.open.id !== zr.zone.open.id, 'zone trade still open after Close all');
-  }
-  // a stale request (journal count changed) is refused
-  if (zr) {
-    const r = node([path.join(REPO, 'build/apply-action.js'), TMD], now, { PAPER_ACTION: JSON.stringify({ strategy: 'zone_pnl', mode: 'zone', sym: zr.sym, kind: 'close', percent: 100, nonce: 'test0000zone02', trade_id: zr.zone.open.id, event_count: 0, last_close: zr.zone.last_close }) });
-    assert.notEqual(r.status, 0, 'stale action accepted');
+    const c = rd('public/s083-paper.json').per[so], kind = c.open.side * (c.price / c.open.entry - 1) > 0 ? 'book' : 'close';
+    build(now, { tab: 's083', sym: so, kind, percent: 40, nonce: nonce(5), trade_id: c.open.id, journal_count: n083++, last_close: c.last_close }); acts.push('s083: ' + kind + ' ' + so);
+    const after = rd('public/s083-paper.json').per[so]; assert.equal(after.log.length, 1);
+    if (kind === 'book') assert(Math.abs(after.open.left_pct - 60) < 1e-6); else assert(!after.open && after.waiting);
   }
   const z = rd('public/paper.json');
   console.log(JSON.stringify({ ok: true, start: new Date(START * 1000).toISOString(), builds: n,
-    zone: { closed: z.zone.live.closed, open: z.zone.live.open, pending: z.zone.live.pending, net: z.zone.live.net },
-    mss: { closed: z.mss.live.closed, open: z.mss.live.open, pending: z.mss.live.pending, net: z.mss.live.net },
-    s083: { open: rd('public/s083-paper.json').summary.open, closed: rd('public/s083-paper.json').summary.closed, net: rd('public/s083-paper.json').summary.net },
+    without_mss: (({ closed, open, pending, net }) => ({ closed, open, pending, net }))(z.zone.sum),
+    with_mss: (({ closed, open, pending, net }) => ({ closed, open, pending, net }))(z.mss.sum),
+    s083: rd('public/s083-paper.json').sum,
     s083_would_have_joined_at_start: joinedAtStart, manual_actions_tested: acts }, null, 1));
   if (process.env.KEEP_OUTPUT) for (const f of ['paper.json', 's083-paper.json', 'freshness.json']) fs.copyFileSync(path.join(REPO, 'public', f), path.join(process.env.KEEP_OUTPUT, f));
   fs.rmSync(tmp, { recursive: true, force: true });

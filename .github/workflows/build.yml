@@ -58,19 +58,16 @@ jobs:
         env:
           PAPER_ACTION: ${{ github.event.inputs.payload }}
         run: node build/apply-action.js md
-      - name: Tabs 01 and 02 (without / with MSS)
-        run: node build/paper-output.js
-      - name: Tab 03 (s083)
-        run: node build/s083-paper.js md
-      - name: Tests (manual rules, page)
+      - name: The three tabs (each coin without a manual action must equal Coin Zones' own pnl.js, or nothing is written)
+        run: node build/paper.js md
+      - name: Tests
         run: |
           node tests/manual.js
+          node tests/parity-ledgers.js md
           npm install --no-save --ignore-scripts --no-audit --no-fund jsdom@26 > /dev/null
           node tests/render.js jsdom
-      - name: Parity, original Coin Zones page vs build.js on the same candles
-        run: node tests/parity.js md jsdom > parity.json || { cat parity.json; exit 1; }
-      - name: Fresh-start replay (nothing before the start can enter any tab)
-        run: node tests/fresh-start.js md
+          node tests/parity.js md jsdom > parity.json || { cat parity.json; exit 1; }
+          node tests/fresh-start.js md
       - name: Save (one commit)
         run: |
           git config user.name "github-actions[bot]"

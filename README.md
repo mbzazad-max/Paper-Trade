@@ -18,16 +18,17 @@ The two Top 20 tabs use the 26 Coin Zones coins (the 20 plus ARB, AVAX, FET, RAY
 - s083 does not join a long or short that was already standing at the start (`config/paper.json` `s083.join_open_regime: false`): each coin waits for its next new signal.
 - `tests/fresh-start.js` replays the real build candle by candle on cut Market-Data and fails if anything from before the start reaches any tab.
 
-## Manual Close all / Book N%
+## Manual Close all / Book %
 
-Owner only (signed in through the home site). The button sends `{tab, coin, trade id, journal count, last closed candle}` to `/api/paper-trade/trade`; the Worker starts the build with it; `build/apply-action.js` refuses it if the trade, the journal or the last closed 4H candle changed, fills it at **the last closed 4H candle's close** (never a browser price), and appends it to `state/manual/zone-events.json` (tabs 01/02, each with its own trade IDs) or `state/manual/events.json` (tab 03). Every build replays the journals, so they are never lost. Book N% closes N% of what is left and needs the position to be in net profit. After Close all on s083 the same side is not reopened until the signal goes flat or turns. Adapted from Paper-Test (`zone-manual.js`, s083 ledger, apply scripts).
+Owner only (signed in through the home site). A button sends `{tab, coin, trade id, journal count, last closed candle}` to `/api/paper-trade/action`; the Worker starts the build with it; `build/apply-action.js` refuses it if the trade, the journal or the last closed 4H candle changed, fills it at **the last closed 4H candle's close** (never a browser price), and appends it to `state/manual/top20.json` (tabs 01/02, each with its own trade IDs) or `state/manual/s083.json`. Every build replays the journals, so they are never lost.
 
-## Files
+- **Close all** sells what is left. **Book %** sells that share of what is left (1-99) and needs it to be in profit after fees.
+- Top 20: after a booking, T1 sells half of what is left and T2 the rest. s083: after Close all the same side is not taken again until the signal goes flat or turns.
+- The ledgers are in `build/ledger.js`, written for Paper-Trade (no code from Paper-Test). With no actions they give exactly Coin Zones' results: every build checks each coin without a manual action against the unchanged `public/pnl.js`, and `tests/parity-ledgers.js` checks 3,000 random coins against `pnl.js` and s083 against the unchanged `stratlab.js` paper test.
 
-- `public/engine.js series.js holdodds.js pnl.js structure.js refresh.js`, `build/build.js structure.js stratlab.js`, `reference/index.original.html data.original.json`: byte-identical to Coin Zones, checked on every run against `reference/SOURCE_SHA256SUMS`.
-- `build/setup.js` fresh start · `build/paper-output.js` tabs 01/02 · `build/s083-paper.js` tab 03 · `build/apply-action.js` owner actions · `build/zone-manual.js` manual overlay.
-- `public/index.html`, `public/app.js`: the three-tab page (display only).
-- `worker/index.js`, `wrangler.jsonc`: Worker `paper-trade`, `workers_dev: false`, reached only at `https://dashboards.mbzazad.workers.dev/paper-trade/`; controls at `/api/paper-trade/`, always behind the login.
+## Page
+
+`public/index.html` uses Coin Zones' own stylesheet (copied from `reference/index.original.html`), `public/cloud.js` is Coin Zones' Refresh button, freshness strip and back link (unchanged), `public/app.js` draws the three tabs.
 
 ## Runs
 
@@ -36,6 +37,7 @@ When Market-Data gets new candles, daily at 01:15 UTC as a safety net, on Refres
 ## Tests
 
 - `node tests/manual.js`: Close all / Book % rules for both Top 20 tabs and s083 on made-up candles.
+- `node tests/parity-ledgers.js <market-data>`: no actions = Coin Zones' `pnl.js` (3,000 random coins, both tabs, a 26-coin portfolio) and Coin Zones' s083 test (`stratlab.js`).
 - `node tests/render.js <jsdom>`: the three tabs, not-started / visitor / owner views, and the request a button sends.
 - `node tests/parity.js <market-data> <jsdom>`: the original Coin Zones page refresh vs `build.js` on the same candles (copied from coin-zones; the 6 coins added after the original page are listed, not compared).
 - `node tests/fresh-start.js <market-data>`: the fresh-start replay described above.
