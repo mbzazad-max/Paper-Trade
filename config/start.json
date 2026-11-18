@@ -1,0 +1,4 @@
+{
+ "_about": "When fresh paper trading starts. \"auto\" = set by the first build on main (after go-live) to the next 4H candle boundary, then never changed. Nothing before this time is ever counted.",
+ "start": "auto"
+}

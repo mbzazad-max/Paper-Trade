@@ -1,0 +1,689 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Coin Zones</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: coin rail on the left, one board per coin on the right; stacked with a chip strip on phones. */
+:root{
+  --bg:#f3f5f8; --panel:#ffffff; --ink:#12202c; --muted:#586878; --line:#dce2e9; --soft:#eaeef3;
+  --sup:#0d8a5c; --sup-bg:#e3f4ec; --res:#c0410f; --res-bg:#fbe9df; --acc:#2557d6; --acc-bg:#e4ebfb;
+  --warn:#9a6700; --warn-bg:#fff3cd; --bad:#b42318;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e141a; --panel:#151d25; --ink:#e5ecf3; --muted:#92a3b4; --line:#26323d; --soft:#1c2630;
+  --sup:#41d09a; --sup-bg:#0f2d24; --res:#ff9265; --res-bg:#33211a; --acc:#7ba5ff; --acc-bg:#182643;
+  --warn:#f2c14e; --warn-bg:#33290f; --bad:#ff7b72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e141a; --panel:#151d25; --ink:#e5ecf3; --muted:#92a3b4; --line:#26323d; --soft:#1c2630;
+  --sup:#41d09a; --sup-bg:#0f2d24; --res:#ff9265; --res-bg:#33211a; --acc:#7ba5ff; --acc-bg:#182643;
+  --warn:#f2c14e; --warn-bg:#33290f; --bad:#ff7b72; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+h2{font-size:16px;font-weight:600;margin:0 0 10px}
+h3{font-size:13px;font-weight:600;margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+a{color:var(--acc)}
+.num,td.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.sub{color:var(--muted);font-size:13px}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:500;background:var(--soft);color:var(--muted);white-space:nowrap}
+.pill.sup{background:var(--sup-bg);color:var(--sup)} .pill.res{background:var(--res-bg);color:var(--res)}
+.pill.acc{background:var(--acc-bg);color:var(--acc)} .pill.warn{background:var(--warn-bg);color:var(--warn)}
+.prog{height:6px;background:var(--soft);border-radius:99px;overflow:hidden;margin:0 0 6px}.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+.chip.main{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}.chip:disabled{opacity:.6;cursor:default}
+.banner{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px}
+.layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:18px;align-items:start}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);max-height:calc(100vh - 24px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px}
+.rail button{display:flex;width:100%;gap:8px;align-items:center;justify-content:space-between;background:none;border:0;color:var(--ink);font:inherit;padding:6px 8px;border-radius:6px;cursor:pointer;text-align:left}
+.rail button:hover{background:var(--soft)} .rail button[aria-current="true"]{background:var(--acc-bg);color:var(--acc);font-weight:600}
+.rail .home{font-weight:600;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;margin-bottom:4px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+.dot.sup{background:var(--sup)} .dot.res{background:var(--res)} .dot.both{background:linear-gradient(90deg,var(--sup) 50%,var(--res) 50%)} .dot.none{background:var(--muted);opacity:.5}
+.strip{display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.grow{flex:1 1 auto;min-width:0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:12px;white-space:nowrap}
+th.sortable{cursor:pointer;user-select:none} th.sortable:hover{color:var(--ink)}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--soft)}
+td.r,th.r{text-align:right}
+.up{color:var(--sup)} .down{color:var(--res)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:4px 11px;border-radius:999px;font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+input.search{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:5px 10px;font:inherit;width:140px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:inherit;font-weight:500;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--acc);border-bottom-color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.kv div{background:var(--soft);border-radius:8px;padding:8px 10px}
+.kv b{display:block;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.kv span{font-family:var(--mono);font-size:15px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.zrow{border-left:4px solid var(--line);padding:8px 12px;margin-bottom:10px;background:var(--panel);border-radius:0 8px 8px 0;border:1px solid var(--line);border-left-width:4px}
+.zrow.S{border-left-color:var(--sup)} .zrow.R{border-left-color:var(--res)} .zrow.watch{opacity:.8;border-style:dashed;border-left-style:solid}
+.zrow summary{cursor:pointer;list-style:none} .zrow summary::-webkit-details-marker{display:none}
+.zrow ul{margin:8px 0 0;padding-left:18px;color:var(--muted)}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:0 6px;border-radius:4px;background:var(--soft);color:var(--muted);margin-right:3px}
+.flag{background:var(--warn-bg);color:var(--warn)}
+.note{color:var(--muted);font-size:12.5px}
+.bad{color:var(--bad)} .good{color:var(--sup)}
+.plan h2{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.reasons{margin:8px 0 0;padding:0;list-style:none}
+.reasons li{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px;padding:5px 0;border-top:1px solid var(--line)}
+.reasons b{font-weight:600;font-size:12.5px}
+svg text{fill:var(--ink);font-family:var(--mono);font-size:11px}
+svg .m{fill:var(--muted)}
+footer{margin-top:24px;color:var(--muted);font-size:12.5px}
+details.how{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:14px}
+details.how summary{cursor:pointer;font-weight:600}
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr)} .rail{display:none}
+  .strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px}
+  .strip button{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:4px 11px;font:inherit;font-size:13px;display:flex;gap:6px;align-items:center;cursor:pointer}
+  .strip button[aria-current="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+  .reasons li{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Coin Zones Board</h1>
+      <div class="sub" id="meta">Loading zone data...</div>
+    </div>
+    <div class="row"><span class="pill" id="stale" hidden></span><span class="pill" id="live" hidden></span><button class="chip main" id="full" type="button" hidden>Refresh all from TradingView</button><button class="chip" id="refresh" type="button" hidden>Refresh prices</button><button class="chip" id="miss" type="button" hidden>Fetch missing</button></div>
+  </header>
+  <div id="progWrap" class="prog" hidden><i id="progBar"></i></div><div class="sub" id="progText" hidden style="margin-bottom:8px"></div>
+  <div id="banner" class="banner" hidden></div>
+  <div class="strip" id="strip" aria-label="Coins"></div>
+  <div class="layout">
+    <nav class="rail" id="rail" aria-label="Coins"></nav>
+    <main id="main" aria-live="polite"></main>
+  </div>
+  <details class="how">
+    <summary>How the zones are built, and how to refresh</summary>
+    <p class="note" id="method"></p>
+    <p class="note"><b>Levels and statuses are from the data timestamp above.</b> Prices move; re-check a zone against the live chart before acting. This is analysis, not financial advice.</p>
+    <p class="note"><b>Refresh prices:</b> the button at the top pulls live prices and RSI from your TradingView connector and updates distances and status against the saved zones. <b>Refresh all from TradingView:</b> pulls fresh 4H and 1D data for every coin and the market gauges, rebuilds zones, plans and statuses inside this page (about 2 to 3 minutes, keep the page open) and saves the result for the next visit. Coins that fail keep their previous data and are listed; "Fetch missing" retries only those. Only the data file changes.</p>
+  </details>
+</div>
+
+<script src="engine.js"></script>
+<script src="series.js"></script>
+<script src="holdodds.js"></script>
+<script src="refresh.js"></script>
+<script src="pnl.js"></script>
+<script>
+(function(){
+var DATA=null, SORT={k:'sym',dir:1}, FILTER='all', QUERY='', TAB='zones';
+var TABS=[['zones','Zones'],['hold','Hold odds'],['spot','Spot setup'],['scen','Scenarios']];
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function fmt(x){
+  if(x==null||isNaN(x))return '-'; var a=Math.abs(x);
+  if(a>=1000)return x.toLocaleString('en-US',{maximumFractionDigits:0});
+  if(a>=100)return x.toFixed(1); if(a>=10)return x.toFixed(2); if(a>=1)return x.toFixed(3);
+  if(a>=0.1)return x.toFixed(4); if(a>=0.01)return x.toFixed(5);
+  if(a>=1e-4)return x.toPrecision(3); return x.toExponential(2).replace('e-','e-');
+}
+function pct(x,d){ if(x==null||isNaN(x))return '-'; d=d==null?1:d; return (x>0?'+':'')+x.toFixed(d)+'%'; }
+function cls(x){return x>0?'up':x<0?'down':''}
+function rr(x){return x==null?'-':x.toFixed(1)+':1'}
+function tfChips(a){return (a||[]).map(function(t){return '<span class="tag">'+esc(t)+'</span>'}).join('')}
+function coin(sym){return DATA.coins.filter(function(c){return c.sym===sym})[0]}
+function dotClass(c){var s=c.status; return s==='AT SUPPORT'?'sup':s==='AT RESISTANCE'?'res':s==='AT SUPPORT + RESISTANCE'?'both':s.indexOf('NO ')===0?'none':''}
+function statusPill(c){var s=c.status,k=s==='AT SUPPORT'?'sup':s==='AT RESISTANCE'?'res':s.indexOf('NO ')===0?'warn':'';return '<span class="pill '+k+'">'+esc(s.toLowerCase())+'</span>'}
+function nearest(c,role){
+  var z=c.zones.filter(function(z){return z.role===role});
+  if(role==='S'){z=z.filter(function(x){return x.d_lo<=0}); z.sort(function(a,b){return b.hi-a.hi})}
+  else {z=z.filter(function(x){return x.d_hi>=0}); z.sort(function(a,b){return a.lo-b.lo})}
+  return z[0]||null;
+}
+function zr(z){return z?fmt(z.lo)+' - '+fmt(z.hi):'-'}
+function planBadge(p){ if(!p)return '<span class="pill">n/a</span>'; return p.valid?'<span class="pill sup">2:1 ok '+rr(p.blend)+'</span>':'<span class="pill">'+rr(p.blend)+'</span>' }
+
+function heat(c){
+  if(c.kind==='gauge')return null;
+  var rng=c.hi365-c.lo365, pos=rng>0?(c.price-c.lo365)/rng*100:50, e=c.ind['1D'].ema['200'], w=c.ind['1W'].rsi, d=c.ind['1D'].rsi, why=[];
+  if(pos>=80)why.push('in the top 20% of its 365-day range ('+pos.toFixed(0)+'%)');
+  if(w!=null&&w>=70)why.push('weekly RSI '+w.toFixed(0));
+  if(d!=null&&d>=70)why.push('daily RSI '+d.toFixed(0));
+  if(e&&c.price>=e*1.3)why.push(pct((c.price/e-1)*100,0)+' above daily 200 EMA');
+  if(c.status.indexOf('AT RESISTANCE')>=0||c.status==='AT SUPPORT + RESISTANCE')why.push('sitting at resistance');
+  var n=why.length, lvl=n>=3?'Expensive':n===2?'Warm':(pos<=20&&d!=null&&d<40)?'Cheap':'Fair';
+  return {lvl:lvl,n:n,why:why,pos:pos,cls:lvl==='Expensive'?'res':lvl==='Warm'?'warn':lvl==='Cheap'?'sup':''};
+}
+function heatPill(c){var h=heat(c);return h?'<span class="pill '+h.cls+'" title="'+esc(h.why.join('; ')||'no heat signals')+'">'+h.lvl+'</span>':'<span class="note">gauge</span>'}
+
+/* ---------- navigation ---------- */
+function route(){
+  var h=decodeURIComponent((location.hash||'').replace('#',''));
+  if(!DATA)return;
+  var parts=h.split('-'); var sym=parts[0]; var tab=parts[1];
+  if(sym==='pnl'){ renderPnl(); markNav('pnl'); return; }
+  if(sym&&sym!=='overview'&&coin(sym)){ if(tab&&TABS.some(function(t){return t[0]===tab}))TAB=tab; renderCoin(coin(sym)); }
+  else renderOverview();
+  markNav(sym&&coin(sym)?sym:'overview');
+}
+function go(sym,tab){ var h=sym==='overview'||sym==='pnl'?sym:sym+(tab?'-'+tab:''); if(('#'+h)===location.hash)route(); else location.hash=h; }
+function markNav(sym){
+  var els=document.querySelectorAll('[data-nav]');
+  for(var i=0;i<els.length;i++){ if(els[i].getAttribute('data-nav')===sym)els[i].setAttribute('aria-current','true'); else els[i].removeAttribute('aria-current'); }
+}
+function buildNav(){
+  var rail='<button class="home" data-nav="overview" data-go="overview">All coins</button><button class="home" data-nav="pnl" data-go="pnl">Top 20 P&amp;L</button>', strip='<button data-nav="overview" data-go="overview">All</button><button data-nav="pnl" data-go="pnl">Top 20 P&amp;L</button>';
+  var gs=DATA.coins.filter(function(c){return c.kind==='gauge'}), cs=DATA.coins.filter(function(c){return c.kind!=='gauge'});
+  function add(c){
+    rail+='<button data-nav="'+c.sym+'" data-go="'+c.sym+'"><span>'+esc(c.sym)+'</span><span class="dot '+dotClass(c)+'" title="'+esc(c.status.toLowerCase())+'"></span></button>';
+    strip+='<button data-nav="'+c.sym+'" data-go="'+c.sym+'"><span>'+esc(c.sym)+'</span><span class="dot '+dotClass(c)+'"></span></button>';
+  }
+  if(gs.length){rail+='<div class="note" style="padding:8px 8px 2px;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Market gauges</div>';gs.forEach(add);rail+='<div class="note" style="padding:8px 8px 2px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid var(--line);margin-top:6px">Coins</div>';strip+='<span class="note" style="flex:none;align-self:center;padding:0 2px">|</span>'}
+  cs.forEach(add);
+  $('rail').innerHTML=rail; $('strip').innerHTML=strip;
+}
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-go]'); if(t){go(t.getAttribute('data-go'),t.getAttribute('data-tab'));return}
+  var f=e.target.closest('[data-filter]'); if(f){FILTER=f.getAttribute('data-filter');renderOverview();return}
+  var s=e.target.closest('th[data-sort]'); if(s){var k=s.getAttribute('data-sort'); if(SORT.k===k)SORT.dir*=-1; else {SORT.k=k;SORT.dir=1} renderOverview();return}
+  var tb=e.target.closest('[data-tabbtn]'); if(tb){TAB=tb.getAttribute('data-tabbtn'); var m=(location.hash||'').replace('#','').split('-')[0]; go(m,TAB);return}
+});
+document.addEventListener('input',function(e){ if(e.target.id==='q'){QUERY=e.target.value.trim().toUpperCase(); var pos=e.target.selectionStart; renderOverview(); var q=$('q'); if(q){q.focus();q.setSelectionRange(pos,pos)}}});
+window.addEventListener('hashchange',route);
+
+/* ---------- overview ---------- */
+var FILTERS=[['all','All'],['exp','Expensive'],['gauge','Market gauges'],['coin','Coins only'],['sup','At support'],['res','At resistance'],['odds','High-odds daily support'],['cheap','Cheap (investor)'],['nosup','No qualified support']];
+/* Cheap = coin at a support zone, daily RSI 35 or below, 40%+ below its 1-year high (same rule as table 7 of the Alt Timing Check). */
+function isCheap(c){var s=c.status;return c.kind!=='gauge'&&s.indexOf('SUPPORT')>=0&&s.indexOf('NO ')!==0&&c.ind['1D'].rsi!=null&&c.ind['1D'].rsi<=35&&c.d_from_hi<=-40}
+function passes(c){
+  if(QUERY&&c.sym.indexOf(QUERY)<0)return false;
+  var s=c.status;
+  if(FILTER==='sup')return s.indexOf('SUPPORT')>=0&&s.indexOf('NO ')!==0;
+  if(FILTER==='res')return s.indexOf('RESISTANCE')>=0&&s.indexOf('NO ')!==0;
+  if(FILTER==='exp'){var hh=heat(c);return !!hh&&hh.lvl==='Expensive'} if(FILTER==='gauge')return c.kind==='gauge'; if(FILTER==='coin')return c.kind!=='gauge';
+  if(FILTER==='nosup')return s==='NO QUALIFIED SUPPORT';
+  if(FILTER==='cheap')return isCheap(c);
+  if(FILTER==='odds')return !!hiOdds(c);
+  return true;
+}
+function sortVal(c,k){
+  switch(k){
+    case 'sym':return c.sym; case 'chg7d':return c.chg7d; case 'rsi':return c.ind['1D'].rsi; case 'bias':return c.bias_score;
+    case 'sup':var s=nearest(c,'S');return s?Math.abs(s.d_hi):999; case 'res':var r=nearest(c,'R');return r?Math.abs(r.d_lo):999;
+    case 'status':return c.status; case 'heat':var hv=heat(c);return hv?hv.n:-1;
+  } return 0;
+}
+function renderOverview(){
+  var list=DATA.coins.filter(passes).slice();
+  list.sort(function(a,b){var x=sortVal(a,SORT.k),y=sortVal(b,SORT.k); return (x>y?1:x<y?-1:0)*SORT.dir});
+  list=list.filter(function(c){return c.kind==='gauge'}).concat(list.filter(function(c){return c.kind!=='gauge'}));
+  var h='<div class="card"><div class="row" style="margin-bottom:10px"><h2 class="grow" style="margin:0">All coins</h2><input class="search" id="q" type="search" placeholder="Find a coin" aria-label="Find a coin" value="'+esc(QUERY)+'"></div>';
+  h+='<div class="chips">'+FILTERS.map(function(f){return '<button class="chip" data-filter="'+f[0]+'" aria-pressed="'+(FILTER===f[0])+'">'+f[1]+'</button>'}).join('')+'</div>';
+  h+='<div class="scroll"><table><thead><tr>';
+  [['sym','Coin'],['','Price'],['chg7d','7d'],['rsi','RSI 1D'],['bias','Bias'],['status','Status'],['heat','Value'],['sup','Nearest support'],['res','Nearest resistance']].forEach(function(c){
+    h+='<th '+(c[0]?'class="sortable" data-sort="'+c[0]+'"':'')+(c[0]==='chg7d'||c[0]==='rsi'||c[1]==='Price'?' style="text-align:right"':'')+'>'+c[1]+(SORT.k===c[0]?(SORT.dir>0?' &uarr;':' &darr;'):'')+'</th>';
+  });
+  h+='</tr></thead><tbody>';
+  list.forEach(function(c){
+    var s=nearest(c,'S'), r=nearest(c,'R');
+    h+='<tr class="click" data-go="'+c.sym+'"><td><b>'+esc(c.sym)+'</b>'+(c.kind==='gauge'?' <span class="tag">gauge</span>':'')+(isCheap(c)?' <span class="tag flag">cheap</span>':'')+(hiOdds(c)?' <span class="tag" style="background:var(--sup-bg);color:var(--sup)">high odds</span>':'')+'</td><td class="num r">'+fmt(c.price)+(c._live?' <span class="up" title="live '+c._live+'">&#9679;</span>':'')+'</td><td class="num r '+cls(c.chg7d)+'">'+pct(c.chg7d)+'</td><td class="num r">'+c.ind['1D'].rsi.toFixed(0)+'</td>'
+     +'<td>'+esc(c.bias)+'</td><td>'+statusPill(c)+'</td><td>'+heatPill(c)+'</td>'
+     +'<td class="num">'+(s?zr(s)+' <span class="note">('+s.count+', '+pct(s.d_hi)+')</span>':'<span class="note">none</span>')+'</td>'
+     +'<td class="num">'+(r?zr(r)+' <span class="note">('+r.count+', '+pct(r.d_lo)+')</span>':'<span class="note">none</span>')+'</td>'
+     +'</tr>';
+  });
+  if(!list.length)h+='<tr><td colspan="9" class="note">No coins match this filter.</td></tr>';
+  h+='</tbody></table></div><p class="note" style="margin:10px 0 0">Zone counts in brackets are the number of independent methods agreeing. The % is the distance from price to the near edge of the zone. Value: Expensive = 3+ heat signals (top 20% of 365-day range, weekly or daily RSI at 70+, 30%+ above daily 200 EMA, sitting at resistance), Warm = 2, Cheap = bottom 20% of range with daily RSI under 40. Hover for the reasons. '+(FILTER==='cheap'?'Cheap (investor) = at a support zone, daily RSI 35 or below, and 40% or more below the 1-year high. Use it with the market score in table 7 of the Alt Timing Check.':'A <span class="tag flag">cheap</span> tag marks coins that pass the investor cheap-entry test.')+'</p></div>';
+  $('main').innerHTML=h;
+}
+
+/* ---------- coin ---------- */
+function renderCoin(c){
+  var i=DATA.coins.indexOf(c), prev=DATA.coins[(i+DATA.coins.length-1)%DATA.coins.length], next=DATA.coins[(i+1)%DATA.coins.length];
+  var TABS_USE=c.kind==='gauge'?TABS.filter(function(t){return t[0]==='zones'||t[0]==='hold'||t[0]==='scen'}):TABS; if(c.kind==='gauge'&&TAB!=='zones'&&TAB!=='hold'&&TAB!=='scen')TAB='zones';
+  var h='<div class="card"><div class="row"><div class="grow"><h2 style="margin:0">'+esc(c.sym)+' <span class="num" style="font-weight:500">'+fmt(c.price)+'</span> <span class="num '+cls(c.chg1d)+'" style="font-size:13px">'+pct(c.chg1d)+' 1d</span> '+(c._live?'<span class="pill sup">live price '+c._live+'</span>':'<span class="pill warn">saved price, not refreshed</span>')+'</h2>'
+   +'<div class="note">'+esc(c.spot_symbol)+(c.kind==='gauge'?' &middot; '+esc(c.desc):'')+' &middot; <a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(c.spot_symbol)+'" target="_blank" rel="noopener">open chart</a></div></div>'
+   +'<div class="row">'+statusPill(c)+'<span class="pill acc">'+esc(c.bias.toLowerCase())+'</span>'+(c.kind==='gauge'?'':heatPill(c))
+   +'<button class="chip" data-go="'+prev.sym+'" aria-label="Previous coin">&larr; '+esc(prev.sym)+'</button><button class="chip" data-go="'+next.sym+'" aria-label="Next coin">'+esc(next.sym)+' &rarr;</button></div></div></div>';
+  h+='<div class="tabs" role="tablist">'+TABS_USE.map(function(t){return '<button role="tab" data-tabbtn="'+t[0]+'" aria-selected="'+(TAB===t[0])+'">'+t[1]+'</button>'}).join('')+'</div>';
+  if(TAB==='zones')h+=tabZones(c); else if(TAB==='hold')h+=tabHold(c); else if(TAB==='spot')h+=tabSpot(c); else h+=tabScen(c);
+  $('main').innerHTML=h;
+}
+
+function ladder(c){
+  var Z=c.zones.concat(c.watch||[]); if(!Z.length)return '';
+  var lo=Math.min(c.price,Math.min.apply(null,Z.map(function(z){return z.lo}))), hi=Math.max(c.price,Math.max.apply(null,Z.map(function(z){return z.hi})));
+  var pad=(hi-lo)*0.06||1; lo-=pad; hi+=pad;
+  var H=Math.max(300,Z.length*34+60), top=14, bot=H-14, W=640;
+  var y=function(p){return top+(hi-p)/(hi-lo)*(bot-top)};
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Zone ladder for '+esc(c.sym)+'">';
+  s+='<line x1="70" y1="'+top+'" x2="70" y2="'+bot+'" stroke="var(--line)"/>';
+  var lab=[];
+  Z.slice().sort(function(a,b){return b.hi-a.hi}).forEach(function(z){
+    var y1=y(z.hi), y2=y(z.lo), hh=Math.max(6,y2-y1), col=z.role==='S'?'var(--sup)':'var(--res)';
+    s+='<rect x="76" y="'+y1.toFixed(1)+'" width="300" height="'+hh.toFixed(1)+'" rx="3" fill="'+col+'" fill-opacity="'+(z.watch?0.12:0.28)+'" stroke="'+col+'" '+(z.watch?'stroke-dasharray="4 3"':'')+'/>';
+    lab.push({y:y1+hh/2,z:z});
+  });
+  var last=-99; lab.forEach(function(l){ if(l.y<last+14)l.y=last+14; last=l.y; });
+  lab.forEach(function(l){var z=l.z;
+    s+='<text x="384" y="'+(l.y+4).toFixed(1)+'">'+fmt(z.lo)+' - '+fmt(z.hi)+'  '+(z.watch?'watch 2m':z.count+' methods')+'  '+pct(z.role==='S'?z.d_hi:z.d_lo)+'</text>';
+  });
+  var yp=y(c.price);
+  s+='<line x1="30" y1="'+yp.toFixed(1)+'" x2="376" y2="'+yp.toFixed(1)+'" stroke="var(--acc)" stroke-width="1.5" stroke-dasharray="5 3"/>';
+  s+='<text x="2" y="'+(yp-4).toFixed(1)+'" style="fill:var(--acc)">'+fmt(c.price)+'</text>';
+  s+='</svg>';
+  return s;
+}
+function indTable(c){
+  var rows='';
+  [['4H','4H'],['1D','1D'],['1W','1W']].forEach(function(t){
+    var d=c.ind[t[0]], e=d.ema;
+    rows+='<tr><td><b>'+t[1]+'</b></td><td class="num r">'+(d.rsi==null?'-':d.rsi.toFixed(0))+'</td><td class="num r">'+(d.atr_pct==null?'-':d.atr_pct.toFixed(1)+'%')+'</td>';
+    ['20','50','100','200'].forEach(function(p){
+      var v=e[p]; rows+='<td class="num r '+(v==null?'':(c.price>v?'up':'down'))+'">'+(v==null?'-':fmt(v))+'</td>';
+    });
+    rows+='</tr>';
+  });
+  var m=c.macd1d;
+  return '<div class="scroll"><table><thead><tr><th>TF</th><th class="r">RSI</th><th class="r">ATR</th><th class="r">EMA20</th><th class="r">EMA50</th><th class="r">EMA100</th><th class="r">EMA200</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+   +'<p class="note" style="margin:8px 0 0">EMA green = price above, red = price below. MACD 1D: '+(m?(m.cross_up?'just crossed up':m.cross_dn?'just crossed down':m.above?'line above signal':'line below signal'):'n/a')
+   +'. 365-day range '+fmt(c.lo365)+' - '+fmt(c.hi365)+' ('+pct(c.d_from_hi)+' from high).</p>';
+}
+function tabZones(c){
+  var h='<div class="two"><div class="card"><h3>Zone ladder</h3>'+ladder(c)+'<p class="note" style="margin:6px 0 0">Green = support, orange = resistance, dashed = price. Dashed boxes are 2-method watch levels, shown only where no zone qualified on that side.</p></div>';
+  h+='<div class="card"><h3>Indicators</h3>'+indTable(c)+'</div></div>';
+  var R=c.zones.filter(function(z){return z.role==='R'}).sort(function(a,b){return a.lo-b.lo}), S=c.zones.filter(function(z){return z.role==='S'}).sort(function(a,b){return b.hi-a.hi});
+  var W=c.watch||[];
+  h+='<div class="card"><h2>Resistance (nearest first) and support (nearest first)</h2>';
+  function block(z){
+    var near=z.role==='S'?z.d_hi:z.d_lo, far=z.role==='S'?z.d_lo:z.d_hi;
+    var s='<details class="zrow '+z.role+(z.watch?' watch':'')+'"'+(z.strongest?' open':'')+'><summary><div class="row"><span class="pill '+(z.role==='S'?'sup':'res')+'">'+(z.role==='S'?'Support':'Resistance')+'</span>'
+      +'<b class="num">'+fmt(z.lo)+' - '+fmt(z.hi)+'</b><span class="note num">'+pct(near)+' to '+pct(far)+'</span>'
+      +'<span class="pill">'+z.count+' methods'+(z.watch?' (watch)':'')+'</span>'+tfChips(z.tfs)+(z.strongest?'<span class="tag flag">strongest cluster</span>':'')+(z.inside?'<span class="tag">price inside</span>':'')
+      +'<span class="note">'+z.methods.map(function(m){return esc(m)}).join(' + ')+'</span></div></summary><ul>'
+      +z.detail.map(function(d){return '<li><b>'+esc(d.m)+'</b> ['+esc(d.tf)+'] '+esc(d.lab)+'</li>'}).join('')+'</ul></details>';
+    if(z.inv_txt)s=s.replace('</summary>','</summary><p style="margin:8px 0 0"><b>Invalidation:</b> '+esc(z.inv_txt)+(z.inv_next?'. Next '+(z.role==='S'?'support':'resistance')+' if it fails: <span class="num">'+esc(z.inv_next)+'</span>':'. No further qualified level beyond it')+'.</p>');
+    return s;
+  }
+  if(R.length)R.forEach(function(z){h+=block(z)});
+  W.filter(function(z){return z.role==='R'}).forEach(function(z){h+=block(z)});
+  if(!R.length&&!W.some(function(z){return z.role==='R'}))h+='<p class="note">No qualified resistance above: nothing with 3+ methods overhead.</p>';
+  h+='<div class="note" style="margin:6px 0 10px;text-align:center">&mdash; price '+fmt(c.price)+' &mdash;</div>';
+  if(S.length)S.forEach(function(z){h+=block(z)});
+  W.filter(function(z){return z.role==='S'}).forEach(function(z){h+=block(z)});
+  if(!S.length&&!W.some(function(z){return z.role==='S'}))h+='<p class="note">No qualified support below.</p>';
+  h+='<p class="note">Method key: SWING = swing / equal highs-lows (liquidity), SHELF = breakout-retest shelf, EMA = EMA20/50/100/200 on any timeframe, FIB = retracement of the dominant swing, FVG = unfilled fair value gap, OB = unmitigated order block, HVN = high-volume node. The "% to" range runs from the near edge to the far edge of the zone.</p></div>';
+  return h;
+}
+
+function setupState(c){return c.spot_setup.state}
+function tabSpot(c){
+  var hh=heat(c), hnote=hh&&hh.lvl==='Expensive'?'<div class="banner" style="background:var(--res-bg);color:var(--res)"><b>Expensive:</b> '+esc(hh.why.join('; '))+'. If you hold this coin, consider trimming into the sell zones below.</div>':(hh&&hh.lvl==='Warm'?'<div class="banner"><b>Warm:</b> '+esc(hh.why.join('; '))+'. Set your sell zones.</div>':'');
+  var ss=c.spot_setup, z=ss.zones, h=hnote+'<div class="card"><h2>Buy and sell zones by timeframe</h2><div class="scroll"><table><thead><tr><th>Timeframe</th><th>Entry buy zone</th><th>Sell zone</th></tr></thead><tbody>';
+  ['4H','1D','1W'].forEach(function(t){
+    var b=z[t].buy, s=z[t].sell;
+    function cell(x,role){ if(!x)return '<span class="note">none qualified</span>';
+      return '<span class="num">'+fmt(x.lo)+' - '+fmt(x.hi)+'</span> <span class="pill '+(role==='B'?'sup':'res')+'">'+x.count+' methods</span>'+(x.weak?' <span class="pill warn">2 methods only</span>':'')+(x.src==='merged'?' <span class="note">(from combined zones)</span>':'')+'<div class="note">'+esc(x.methods.join(' + '))+'</div>'; }
+    h+='<tr><td><b>'+t+'</b></td><td>'+cell(b,'B')+'</td><td>'+cell(s,'S')+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+  h+='<div class="card"><h2>Spot setup <span class="pill '+(ss.state.indexOf('NO ')===0||ss.state.indexOf('WEAK')===0?'warn':'acc')+'">'+esc(ss.state.toLowerCase())+'</span>'+((ss.entry!=null&&(ss.rr1==null||ss.rr1<1.5))?' <span class="pill warn">no trade, R:R under 1.5:1</span>':'')+'</h2>';
+  if(ss.entry==null){ h+='<p>No buy zone with enough agreement exists below price. Price sits near the bottom of the structure on every timeframe checked, so there is no level to anchor an entry or a stop. Wait for a new base to form.</p></div>'; return h; }
+  var b=ss.basis, near=c.price>b.hi;
+  h+='<div class="kv"><div><b>Buy zone (basis)</b><span>'+fmt(b.lo)+' - '+fmt(b.hi)+'</span></div><div><b>Entry (zone midpoint)</b><span>'+fmt(ss.entry)+'</span></div>'
+   +'<div><b>Stop</b><span>'+fmt(ss.stop)+'</span></div><div><b>Stop distance</b><span>'+ss.atr_mult.toFixed(1)+' ATR &middot; '+ss.stop_pct.toFixed(1)+'%</span></div>'
+   +'<div><b>Target 1</b><span>'+fmt(ss.t1)+'</span></div><div><b>R:R to T1</b><span class="'+(ss.rr1!=null&&ss.rr1>=1.5?'good':'bad')+'">'+rr(ss.rr1)+'</span></div>'
+   +'<div><b>Target 2</b><span>'+fmt(ss.t2)+'</span></div><div><b>R:R to T2</b><span class="'+(ss.rr2!=null&&ss.rr2>=1.5?'good':'bad')+'">'+rr(ss.rr2)+'</span></div></div>';
+  h+='<h3 style="margin-top:14px">Trigger</h3><p style="margin:0 0 8px">'
+   +(near?'Price is above the zone. Place the buy zone as a limit area and act only when price trades into '+fmt(b.lo)+' - '+fmt(b.hi)+' and a 4H candle closes back above '+fmt(b.hi)+'. ':'Price is inside or at the zone. Enter on a 4H close back above '+fmt(b.hi)+' after a wick into '+fmt(b.lo)+' - '+fmt(b.hi)+'. ')
+   +'Add confirmation from the 1D RSI turning up ('+c.ind['1D'].rsi.toFixed(0)+' now).</p>';
+  h+='<h3>Stop</h3><p style="margin:0 0 8px">Stop = zone floor minus 1.0 x daily ATR(14) ('+fmt(c.atr_d)+'), which is '+fmt(ss.stop)+'.</p>';
+  h+='<h3>Single level that voids the setup</h3><p style="margin:0">'+esc(ss.void_txt)+'. A close below it means the zone no longer holds.</p>';
+  if(ss.rr1==null)h+='<p class="note bad" style="margin-top:8px"><b>No trade.</b> There is no target above this entry, so reward-to-risk cannot be measured. Treat it as a watch level.</p>';
+  else if(ss.rr1<1.5){var need=(ss.t1+1.5*ss.stop)/2.5;h+='<p class="note bad" style="margin-top:8px"><b>No trade at this entry.</b> Reward to Target 1 is '+rr(ss.rr1)+', below the 1.5:1 minimum. '+(need>ss.stop&&need<ss.entry?'An entry at or below <b class="num">'+fmt(need)+'</b> would reach 1.5:1'+(need<b.lo?', which is under the zone, so skip it unless price sweeps lower first.':'.'):'No entry inside the zone reaches 1.5:1 with this stop and target.')+'</p>'}
+  h+='</div>';
+  return h;
+}
+
+function planCard(p,c,label){
+  if(!p)return '<div class="card plan"><h2>'+label+'</h2><p class="note">No qualified '+(label.indexOf('LONG')>=0?'support':'resistance')+' zone to anchor this plan.</p></div>';
+  var sg=p.side==='LONG';
+  var h='<div class="card plan"><h2>'+label+' <span class="pill '+(p.valid?'sup':'warn')+'">'+(p.valid?'2:1 or better':'below 2:1')+'</span>'+(p.ticker?'<span class="pill">'+esc(p.ticker)+'</span>':'<span class="pill warn">no .P ticker in watchlist</span>')+'</h2>';
+  h+='<div class="kv"><div><b>Entry 1 (40%)</b><span>'+fmt(p.e1)+'</span></div><div><b>Entry 2 (60%)</b><span>'+fmt(p.e2)+'</span></div><div><b>Average entry</b><span>'+fmt(p.avg)+'</span></div>'
+   +'<div><b>Stop loss</b><span>'+fmt(p.sl)+'</span></div><div><b>Stop distance</b><span>'+p.sl_pct.toFixed(1)+'%</span></div><div><b>Loss at stop (5x)</b><span class="'+(p.loss_at_sl_5x>60?'bad':'')+'">'+p.loss_at_sl_5x.toFixed(0)+'% of margin</span></div>'
+   +'<div><b>TP1</b><span>'+fmt(p.t1)+(p.g1!=null?' ('+pct(p.g1)+')':'')+'</span></div><div><b>R:R to TP1</b><span>'+rr(p.rr1)+'</span></div>'
+   +'<div><b>TP2</b><span>'+fmt(p.t2)+(p.g2!=null?' ('+pct(p.g2)+')':'')+'</span></div><div><b>R:R to TP2</b><span>'+rr(p.rr2)+'</span></div>'
+   +'<div><b>Blended R:R (half at each TP)</b><span class="'+(p.valid?'good':'bad')+'">'+rr(p.blend)+'</span></div></div>';
+  if(!p.valid&&p.cap!=null)h+='<p class="note" style="margin-top:8px">'+(sg?'To reach 2:1 the average entry must be at or below ':'To reach 2:1 the average entry must be at or above ')+'<b class="num">'+fmt(p.cap)+'</b>'+(sg?(p.cap<p.zone_lo?' which is below the zone, so skip it unless price sweeps lower first.':'.'):(p.cap>p.zone_hi?' which is above the zone, so skip it unless price sweeps higher first.':'.'))+'</p>';
+  if(!p.lev_ok)h+='<p class="note bad">The stop is '+p.sl_pct.toFixed(1)+'% away. At 5x the liquidation price sits roughly 18-19% from entry, so the stop leaves little room; reduce size or use lower leverage.</p>';
+  h+='<h3 style="margin-top:12px">Why this entry</h3><ul class="reasons">'+p.reasons.map(function(r){return '<li><b>'+esc(r.k)+'</b><span>'+esc(r.t)+'</span></li>'}).join('')+'</ul>';
+  h+='<p class="note" style="margin:8px 0 0">Zone: '+fmt(p.zone_lo)+' - '+fmt(p.zone_hi)+' ('+p.zone_count+' methods, '+p.zone_tfs.join(' + ')+'). Stop = '+(sg?'zone floor minus':'zone top plus')+' 0.75 x daily ATR.</p></div>';
+  return h;
+}
+function tabFut(c){
+  var h='<p class="note" style="margin:0 0 10px">5x leverage, entries split 40% / 60% across the zone, two take-profits and one stop. Levels come from the spot chart'+(c.fut_symbol?' and apply to '+esc(c.fut_symbol):'; this coin has no .P ticker in your watchlist, so use the same levels on your exchange of choice')+'. Plans below 2:1 are shown with the entry that would fix them.</p>';
+  h+='<div class="two">'+planCard(c.futures.long,c,'LONG 5x')+planCard(c.futures.short,c,'SHORT 5x')+'</div>';
+  return h;
+}
+function tabScen(c){
+  if(c.kind==='gauge'){ var h0='<div class="two"><div class="card"><h2>Bull case</h2><p style="margin:0">'+esc(c.bull)+'</p></div><div class="card"><h2>Bear case</h2><p style="margin:0">'+esc(c.bear)+'</p></div></div>';
+    h0+='<div class="card"><h2>Invalidation levels</h2><div class="scroll"><table><thead><tr><th>Level type</th><th>Zone</th><th>Methods</th><th>Invalidated by</th><th>Next level if it fails</th></tr></thead><tbody>';
+    c.zones.concat(c.watch||[]).sort(function(a,b){return b.hi-a.hi}).forEach(function(z){h0+='<tr><td><span class="pill '+(z.role==='S'?'sup':'res')+'">'+(z.role==='S'?'Support':'Resistance')+'</span></td><td class="num">'+zr(z)+'</td><td>'+z.count+(z.watch?' (watch)':'')+'</td><td class="num">'+esc(z.inv_txt||'-')+'</td><td class="num">'+esc(z.inv_next||'none')+'</td></tr>'});
+    return h0+'</tbody></table></div><p class="note" style="margin:8px 0 0">Gauges have no buy or sell zones or trade plans. Levels are on the index or ratio itself, not on a coin price.</p></div>'; }
+  var h='<div class="two"><div class="card"><h2>Bull case</h2><p style="margin:0">'+esc(c.bull)+'</p></div><div class="card"><h2>Bear case</h2><p style="margin:0">'+esc(c.bear)+'</p></div></div>';
+  function risk(p,title,inv){
+    if(!p)return '<div class="card"><h2>'+title+'</h2><p class="note">No qualified zone to anchor this plan.</p></div>';
+    var sg=p.side==='LONG';
+    return '<div class="card"><h2>'+title+'</h2><div class="kv"><div><b>Entry trigger zone</b><span>'+fmt(p.zone_lo)+' - '+fmt(p.zone_hi)+'</span></div><div><b>Average entry</b><span>'+fmt(p.avg)+'</span></div><div><b>Stop</b><span>'+fmt(p.sl)+'</span></div>'
+     +'<div><b>Target 1</b><span>'+fmt(p.t1)+' ('+rr(p.rr1)+')</span></div><div><b>Target 2</b><span>'+fmt(p.t2)+' ('+rr(p.rr2)+')</span></div></div>'
+     +'<p style="margin:10px 0 0"><b>Entry trigger:</b> '+(sg?'price tags the zone and a 4H candle closes back above '+fmt(p.zone_hi)+'.':'price tags the zone and a 4H candle closes back below '+fmt(p.zone_lo)+'.')+'</p>'
+     +'<p style="margin:4px 0 0"><b>Invalidation:</b> '+(sg?'daily close below '+fmt(p.zone_lo)+'.':'daily close above '+fmt(p.zone_hi)+'.')+'</p></div>';
+  }
+  return h;
+}
+
+
+
+/* ---------- hold odds ---------- */
+function holdOf(c){var H=DATA.hold;var a=c.hold||null,b=H&&H.perCoin?H.perCoin[c.sym]:null;if(a&&b)return a.asof>=b.asof?a:b;return a||b||null}
+function holdPx(c,H){return c._live||!H||!H.tf['1D']?c.price:H.tf['1D'].spot}
+function oddsOk(o){return !!(o&&o.hold!=null&&o.hold>=75&&o.edge!=null&&o.edge>0&&o.p!=null&&o.p<=0.1)}
+function hiOdds(c){if(c.kind==='gauge')return null;var H=holdOf(c);if(!H||!H.tf['1D'])return null;var P=holdPx(c,H);
+  var z=H.tf['1D'].zones.filter(function(z){return z.role==='S'&&oddsOk(z.odds)&&P>=z.lo*0.99&&P<=z.hi*1.01})[0];return z||null}
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function dt(t){var d=new Date(t*1000);return d.getUTCDate()+' '+MON[d.getUTCMonth()]+' '+String(d.getUTCFullYear()).slice(2)}
+function oddsCell(o){if(!o)return '<span class="note">too few past taps</span>';
+  var ok=oddsOk(o),no=o.p==null||o.p>0.1||o.edge<=0;
+  return '<b class="num">'+o.hold.toFixed(0)+'%</b> <span class="note">vs random '+(o.ctrl==null?'-':o.ctrl.toFixed(0)+'%')+' (n '+o.n+')</span><br>'+(ok?'<span class="pill sup">edge, p '+o.p+'</span>':no?'<span class="pill">no edge'+(o.p!=null?', p '+o.p:'')+'</span>':'<span class="pill warn">weak edge, p '+o.p+'</span>')}
+function tapDots(z){if(!z.taps.length)return '<span class="note">untested in lookback (fresh)</span>';
+  return z.taps.map(function(x){var col=x.r==='H'?'var(--sup)':x.r==='F'?'var(--res)':'var(--muted)',lab=x.r==='H'?'held':x.r==='F'?'failed':x.r==='O'?'open':'no result';
+    return '<span class="tag" title="Tap '+x.n+' on '+dt(x.t)+': '+lab+(x.r==='H'?', bounced '+x.mx+'%':'')+'" style="color:'+col+'">'+dt(x.t)+' '+(x.r==='H'?'&#10003;':x.r==='F'?'&#10007;':'&middot;')+'</span>'}).join(' ')}
+function holdTable(c,T,tf,H){if(!T)return '<p class="note">Not enough '+tf+' history to build zones.</p>';
+  var P=holdPx(c,H),Z=T.zones.slice().sort(function(a,b){return b.hi-a.hi});
+  if(!Z.length)return '<p class="note">No qualified '+tf+' zones near price.</p>';
+  var h='<div class="scroll"><table><thead><tr><th>Zone</th><th class="r">Distance</th><th>Past taps (oldest first)</th><th>Next tap</th><th>Hold odds (all '+(c.kind==='gauge'?'gauges':'coins')+')</th><th>This zone</th></tr></thead><tbody>';
+  Z.forEach(function(z){var d=((z.role==='S'?z.hi:z.lo)/P-1)*100;
+    h+='<tr><td><span class="pill '+(z.role==='S'?'sup':'res')+'">'+(z.role==='S'?'Support':'Resistance')+'</span><div class="num">'+fmt(z.lo)+' - '+fmt(z.hi)+'</div><div class="note">'+z.count+' methods</div></td>'
+     +'<td class="num r">'+pct(d)+'</td><td>'+tapDots(z)+'</td><td class="num">#'+z.next+'</td><td>'+oddsCell(z.odds)+'</td>'
+     +'<td class="num">'+(z.ownN?z.taps.filter(function(x){return x.r==='H'}).length+' of '+z.ownN+' held':'<span class="note">-</span>')+'</td></tr>'});
+  return h+'</tbody></table></div>'}
+function tabHold(c){var H=holdOf(c),G=DATA.hold;
+  if(!G)return '<div class="card"><p class="note">Hold odds have not been calculated yet.</p></div>';
+  if(!H)return '<div class="card"><h2>Hold odds</h2><p>'+esc(c.sym)+' has under about 600 days of daily history, so it was left out of the backtest. Press "Refresh all from TradingView" to build its tap history from the daily bars the refresh already pulls.</p></div>';
+  var PX=holdPx(c,H),h='',S1=H.tf['1D']?H.tf['1D'].zones.filter(function(z){return z.role==='S'&&z.hi<PX*1.01}).sort(function(a,b){return b.hi-a.hi})[0]:null;
+  var W1=null;if(H.tf['1W']){var lim=S1?S1.lo:PX;W1=H.tf['1W'].zones.filter(function(z){return z.role==='S'&&z.hi<lim}).sort(function(a,b){return b.hi-a.hi})[0]||null}
+  var isG=c.kind==='gauge',fb=isG?G.fallbackG:G.fallback;
+  if(!isG)h+='<div class="card"><h2>Your plan on '+esc(c.sym)+'</h2><p class="note" style="margin:-4px 0 10px">Distances from '+(c._live?'the live price '+fmt(PX):'the daily close '+fmt(PX)+' on '+dt(H.asof))+'.</p><div class="kv">'
+   +'<div><b>Spot buy: nearest 1D support</b><span>'+(S1?fmt(S1.lo)+' - '+fmt(S1.hi):'none')+'</span></div>'
+   +'<div><b>Its hold odds</b><span>'+(S1&&S1.odds?S1.odds.hold.toFixed(0)+'% (random '+S1.odds.ctrl.toFixed(0)+'%)':'-')+'</span></div>'
+   +'<div><b>DCA: 1W support below it</b><span>'+(W1?fmt(W1.lo)+' - '+fmt(W1.hi):'none found')+'</span></div>'
+   +'<div><b>Its hold odds</b><span>'+(W1&&W1.odds?W1.odds.hold.toFixed(0)+'% (random '+W1.odds.ctrl.toFixed(0)+'%)':'-')+'</span></div></div>'
+   +'<p class="note" style="margin:10px 0 0">'+(S1?(oddsOk(S1.odds)?'<b class="good">This daily support is in a group that beats random.</b> ':'<b>This daily support is in a group that does not beat random</b>, so treat its hold odds as no better than any level at that distance. '):'')
+   +'Across all coins, when a 1D support failed, a 1W support existed below it '+Math.round(fb.withWeekly/(fb.withWeekly+fb.noWeekly)*100)+'% of the time; price reached it '+Math.round(fb.reached/fb.withWeekly*100)+'% of the time, a median '+Math.abs(fb.ddMed)+'% below the daily zone, and it then held '+fb.holdPct+'% of the time (median bounce '+fb.bounceMed+'%).</p></div>';
+  h+='<div class="card"><h2>Daily zones (1D)</h2>'+holdTable(c,H.tf['1D'],'1D',H)+'</div>';
+  h+='<div class="card"><h2>Weekly zones (1W)</h2>'+holdTable(c,H.tf['1W'],'1W',H)+'</div>';
+  if(isG)h='<div class="card"><p style="margin:0">Levels on the '+esc(c.sym)+' index itself, from its own daily history. Odds are pooled across the '+((G.gauges||[]).length)+' market gauges only, kept separate from the coins. Distances from '+(c._live?'the live value':'the daily close')+' '+fmt(holdPx(c,H))+'.</p></div>'+h;
+  var Pk=isG?G.poolG:G.pool,row=function(k,lab){var g=Pk[k];return g?'<tr><td>'+lab+'</td><td class="num r">'+g.n+'</td><td class="num r"><b>'+g.hold+'%</b></td><td class="num r">'+g.ctrl+'%</td><td class="num r '+(g.edge>0?'up':'down')+'">'+(g.edge>0?'+':'')+g.edge+'</td><td class="num r">'+(g.p==null?'-':g.p)+'</td><td class="num r">'+g.bounce+'%</td></tr>':''};
+  h+='<div class="card"><h2>Backtest: how often zones held</h2><div class="scroll"><table><thead><tr><th>Group</th><th class="r">Taps</th><th class="r">Held</th><th class="r">Random level</th><th class="r">Edge</th><th class="r">p</th><th class="r">Median bounce</th></tr></thead><tbody>'
+   +row('1D|S|1|all','1D support, 1st tap')+row('1D|S|2|all','1D support, 2nd tap')+row('1D|S|3+|all','1D support, 3rd+ tap')+row('1D|S|all|all','1D support, all')
+   +row('1W|S|1|all','1W support, 1st tap')+row('1W|S|2|all','1W support, 2nd tap')+row('1W|S|3+|all','1W support, 3rd+ tap')+row('1W|S|all|all','1W support, all')
+   +row('1D|R|all|all','1D resistance, all')+row('1W|R|all|all','1W resistance, all')+'</tbody></table></div>'
+   +'<p class="note" style="margin:8px 0 0"><b>Tap</b> = price trades into the zone after first being at least 1 ATR away. <b>Held</b> = price then moves 1 ATR away from the zone before closing 1 ATR through it, within 20 days (1D) or 12 weeks (1W). <b>Random level</b> = a level at the same distance and width at another date on the same coin, same rules; a group only has an edge if it beats this (p 0.10 or lower). Walk-forward on '+(isG?(G.gauges.length+' market gauges'):(G.coins.length+' coins'))+' of full daily history: zones rebuilt every week from past data only, '+(isG?G.nTapsG:G.nTaps)+' taps, '+(isG?G.nCtrlG:G.nCtrl)+' random taps.'+(isG?' After a 1D support failed, the next 1W support was reached '+Math.round(fb.reached/fb.withWeekly*100)+'% of the time (median '+Math.abs(fb.ddMed)+'% lower) and held '+fb.holdPct+'%.':'')+' Tap counts look back 365 days (1D) or 156 weeks (1W). Pooled odds use the zone\'s next tap number and method count, falling back to wider groups when fewer than 20 taps exist. Built '+esc(G.asof)+(c.hold&&c.hold.asof>(G.perCoin[c.sym]||{asof:0}).asof?'; this coin\'s tap history was refreshed with the page':'')+'. Past behaviour, not a guarantee.</p></div>';
+  return h}
+
+/* ---------- live price refresh via the viewer's TradingView connector ---------- */
+var MCP=null, SERVERS=['Trading View','Trading_View'], SERVER=null;
+function recalc(c){
+  var P=c.price, atS=false, atR=false;
+  c.zones.concat(c.watch||[]).forEach(function(z){
+    z.d_lo=(z.lo/P-1)*100; z.d_hi=(z.hi/P-1)*100; z.inside=(P>=z.lo&&P<=z.hi);
+    if(!z.watch){ if(z.role==='S'&&P>=z.lo*0.99&&P<=z.hi*1.01)atS=true; if(z.role==='R'&&P>=z.lo*0.99&&P<=z.hi*1.01)atR=true; }
+  });
+  if(!c._st)c._st=c.status;
+  c.status=atS&&atR?'AT SUPPORT + RESISTANCE':atS?'AT SUPPORT':atR?'AT RESISTANCE':(c._st.indexOf('NO ')===0?c._st:'BETWEEN ZONES');
+}
+function setLive(t,k){var el=$('live');el.hidden=false;el.className='pill '+(k||'');el.textContent=t;var b=$('banner');b.hidden=false;b.className='banner';b.style.background=k==='sup'?'var(--sup-bg)':'var(--warn-bg)';b.style.color=k==='sup'?'var(--sup)':'var(--warn)';b.textContent=t}
+async function refreshPrices(){
+  var b=$('refresh'); b.disabled=true; b.textContent='Refreshing...'; setLive('Fetching live prices from TradingView...','');
+  var syms=DATA.coins.filter(function(c){return c.kind!=='gauge'}).map(function(c){return c.spot_symbol}), res=null, err=null;
+  for(var i=0;i<SERVERS.length&&!res;i++){
+    var name=SERVER||SERVERS[i];
+    try{ res=await MCP.callTool(name,'mcp-tv-get-symbol-data-batch',{symbols:syms,columns:['close','change','RSI']},{cache:false}); SERVER=name; }
+    catch(e){ err=e; if(SERVER||(e.code!=='server_not_connected'&&e.code!=='not_in_manifest'&&e.code!=='server_not_found'))break; }
+  }
+  b.disabled=false; b.textContent='Refresh prices';
+  if(!res){
+    var m={needs_reauth:'Reconnect TradingView in claude.ai Settings, Connectors.',server_not_connected:'Add the TradingView connector in claude.ai Settings, Connectors.',approval_required:'Approval is needed. Tap Refresh prices again and allow it.',not_in_manifest:'Access to TradingView was not allowed for this page.',selection_required:'Choose which TradingView connector to use, then try again.'};
+    setLive((err&&m[err.code])||'Could not reach TradingView. Try again in a minute.','warn'); return;
+  }
+  var d=(res.payload&&res.payload.data)||{}, n=0;
+  DATA.coins.forEach(function(c){
+    var r=d[c.spot_symbol]; if(!r||r.close==null)return;
+    c.price=r.close; c._live=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); if(r.change!=null)c.chg1d=r.change; if(r.RSI!=null)c.ind['1D'].rsi=r.RSI;
+    c.d_from_hi=(c.price/c.hi365-1)*100; c.d_from_lo=(c.price/c.lo365-1)*100; recalc(c); n++;
+  });
+  var t=new Date(); setLive('Prices live '+t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+' ('+n+' coins). Zones and plans stay as of '+DATA.meta.generated,'sup');
+  buildNav(); route();
+}
+async function initLive(){
+  try{ if(!window.claude||!window.claude.use)return; MCP=await window.claude.use('mcp'); }catch(e){return}
+  if(!MCP)return;
+  var b=$('refresh'); b.hidden=false; b.addEventListener('click',refreshPrices);
+}
+
+
+/* ---------- full refresh: pull 4H + 1D per coin from TradingView, rebuild zones and plans in the page, save to the page database ---------- */
+var DB=null, FULL=false, STOP=false, MISSING=[];
+function nowStamp(){return new Date().toISOString().slice(0,16).replace('T',' ')+' UTC'}
+function stamp(){
+  var d=DATA; $('meta').textContent='Data as of '+d.meta.generated+' · '+d.meta.n+' coins · 4H, 1D and 1W';
+  var t=Date.parse(d.meta.generated.replace(' UTC','Z').replace(' ','T')), el=$('stale');
+  if(!isNaN(t)){var hrs=(Date.now()-t)/36e5; el.hidden=false;
+    if(hrs>24){el.className='pill warn';el.textContent='Zones built '+Math.round(hrs/24*10)/10+' days ago';}
+    else {el.className='pill sup';el.textContent='Zones built '+(hrs<1?'under 1h':Math.round(hrs)+'h')+' ago';}}
+}
+function clean(o){var c=JSON.parse(JSON.stringify(o)); for(var k in c) if(k.charAt(0)==='_') delete c[k]; return c}
+function prog(i,n,label){$('progWrap').hidden=false;$('progText').hidden=false;$('progBar').style.width=(n?Math.round(i/n*100):0)+'%';$('progText').textContent=label}
+var GSER=[['T2','CRYPTOCAP:TOTAL2ES'],['TOT','CRYPTOCAP:TOTAL'],['T3','CRYPTOCAP:TOTAL3ES'],['USDT','CRYPTOCAP:USDT.D'],['USDC','CRYPTOCAP:USDC.D'],['ETHBTC','BINANCE:ETHBTC'],['GOLD','TVC:GOLD'],['SILV','TVC:SILVER']];
+async function fullRefresh(onlyMissing){
+  if(FULL||!MCP)return; FULL=true; STOP=false;
+  ['full','miss','refresh'].forEach(function(i){$(i).disabled=true});
+  $('full').textContent='Refreshing...';
+  var coins=DATA.coins.filter(function(c){return c.kind!=='gauge'}), jobs=[];
+  var needG=!onlyMissing||!DATA.coins.some(function(c){return c.kind==='gauge'&&c._fresh});
+  coins.forEach(function(c){ if(onlyMissing&&c._fresh)return;
+    jobs.push({id:c.sym+'|4h',sym:c.spot_symbol,interval:'4h',count:1000});
+    jobs.push({id:c.sym+'|1d',sym:c.spot_symbol,interval:'1D',count:1200}); });
+  if(needG) GSER.forEach(function(g){jobs.push({id:'G|'+g[0],sym:g[1],interval:'4h',count:5000})});
+  setLive('Pulling fresh data from TradingView. Keep this page open.','');
+  var res=await RF.runJobs(jobs,function(i,n,j){prog(i,n,j?('Loading '+j.sym.replace(/^[A-Z]+:/,'')+' '+j.interval+' ('+(i+1)+' of '+n+')'):'Calculating zones...')},function(){return STOP});
+  var okC=0, bad=[], saved=0, saveErr=null, ts=Date.now();
+  coins.forEach(function(c){
+    var b4=res.ok[c.sym+'|4h'], bd=res.ok[c.sym+'|1d'];
+    if(!b4||!bd){ if(jobs.some(function(j){return j.id===c.sym+'|4h'})) bad.push(c.sym); return; }
+    try{
+      var n=ZE.buildCoin(c.sym,b4,bd,c.spot_symbol,c.fut_symbol);
+      try{ if(window.HO){var bdc={};'tohlcv'.split('').forEach(function(k){bdc[k]=bd[k].slice(0,-1)}); n.hold=HO.current(bdc,DATA.hold&&DATA.hold.pool);} }catch(e){}
+      n._fresh=true; n._live=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      DATA.coins[DATA.coins.indexOf(c)]=n; okC++;
+    }catch(e){ bad.push(c.sym); }
+  });
+  var gOk=0, gMsg='';
+  if(needG){
+    var R={}, miss=[]; GSER.forEach(function(g){ if(res.ok['G|'+g[0]])R[g[0]]=res.ok['G|'+g[0]]; else if(g[0]!=='STB')miss.push(g[0]); else gMsg='STABLE.C did not load and keeps its previous zones.'; });  /* STABLE.C is optional: a short new index must not block the other gauges */
+    if(!miss.length){
+      try{ window.HOLD_POOL_G=DATA.hold&&DATA.hold.poolG; var G=SR.buildGauges(R);
+        G.forEach(function(g){ var i=DATA.coins.findIndex(function(c){return c.sym===g.sym}); g._fresh=true; if(i>=0)DATA.coins[i]=g; else DATA.coins.unshift(g); gOk++; });
+      }catch(e){ gMsg='Market gauges failed to calculate.'; }
+    } else gMsg='Market gauges not updated (missing '+miss.join(', ')+').';
+  }
+  var pmsg='';try{pmsg=await pnlIngest(res);}catch(e){pmsg=' P&L test not updated.';}
+  if(okC||gOk){
+    DATA.meta.generated=nowStamp(); stamp();
+    if(DB){
+      try{
+        for(var i=0;i<DATA.coins.length;i++){var c=DATA.coins[i]; if(!c._fresh)continue; var o=clean(c); o._ts=ts; await DB.doc('board/c_'+RF.safeId(c.sym)).set(o); saved++;}
+        await DB.doc('board/meta').set({generated:DATA.meta.generated,ts:ts,n:coins.length});
+      }catch(e){ saveErr=e; }
+    }
+  }
+  console.log('FAILED',JSON.stringify(Object.keys(res.failed).slice(0,5)),JSON.stringify(Object.values(res.failed).slice(0,2).map(function(e){return e&&(e.message||e.code)})));MISSING=bad; var left=DATA.coins.filter(function(c){return c.kind!=='gauge'&&!c._fresh}).length;
+  var msg='Refreshed '+okC+' of '+coins.length+' coins'+(needG?(gOk?' and '+gOk+' gauges':''):'')+' at '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'.';
+  if(saveErr) msg+=' Not saved for next time (only editors can save).'; else if(saved) msg+=' Saved, so it opens like this next time.';
+  if(left) msg+=' '+left+' still on older data'+(bad.length?': '+bad.join(', '):'')+'.';
+  if(gMsg) msg+=' '+gMsg; if(pmsg) msg+=pmsg;
+  if(res.stopped) msg+=' '+res.stopped;
+  setLive(msg, (left||res.stopped||saveErr||gMsg)?'warn':'sup');
+  $('progWrap').hidden=true; $('progText').hidden=true;
+  $('full').disabled=false; $('full').textContent='Refresh all from TradingView'; $('refresh').disabled=false; $('miss').disabled=false;
+  $('miss').hidden=!left; FULL=false;
+  buildNav(); route();
+}
+async function loadSnapshot(){
+  try{
+    var snap=await DB.collection('board').get(), meta=null, rows=[];
+    snap.docs.forEach(function(d){ if(d.id==='meta')meta=d.data(); else rows.push(d.data()); });
+    var base=Date.parse(DATA.meta.generated.replace(' UTC','Z').replace(' ','T')), n=0;
+    var GONE=['TOTALES','BTC.D','T2ES-OTH/BTC','STABLE.C'];
+    rows.forEach(function(r){ if(!r||!r.sym||!r._ts||r._ts<=base||GONE.indexOf(r.sym)>=0)return; var i=DATA.coins.findIndex(function(c){return c.sym===r.sym}); r._fresh=true; if(i>=0)DATA.coins[i]=r; else DATA.coins.push(r); n++; });
+    if(n&&meta&&meta.ts>base){DATA.meta.generated=meta.generated; stamp(); buildNav(); route();}
+    return n;
+  }catch(e){return 0}
+}
+async function initFull(){
+  try{ DB=await window.claude.use('db'); }catch(e){DB=null}
+  if(!MCP||!(await RF.init()))return;
+  $('full').hidden=false; $('full').addEventListener('click',function(){fullRefresh(false)});
+  $('miss').addEventListener('click',function(){fullRefresh(true)});
+  if(DB) await loadSnapshot();
+}
+
+/* ---------- Top 20 P&L paper test: advice snapshots + closed 4H bars live in the page database (collection pnl) ---------- */
+var PST=null, PFILT='rr15', PERR=null;
+async function loadPnl(){
+  try{ var db=DB||await window.claude.use('db'); if(!db)throw new Error('no db');
+    var snap=await db.collection('pnl').get(), st={cfg:null,snaps:{},bars:{},ver:{}};
+    snap.docs.forEach(function(d){var id=d.id,v=d.data(); if(id==='cfg')st.cfg=v; else if(id.indexOf('s_')===0)st.snaps[id.slice(2)]=v; else if(id.indexOf('b_')===0)st.bars[id.slice(2)]=v;});
+    if(!st.cfg)throw new Error('The paper test has not been set up yet.');
+    PST=st; PERR=null;
+  }catch(e){ PERR=e&&e.message||'Could not load the paper test.'; }
+  if((location.hash||'').indexOf('pnl')>=0)route();
+}
+/* called by the full refresh: save a new advice snapshot and the latest closed 4H bars for each cohort coin */
+async function pnlIngest(res){
+  if(!PST||!DB||!window.PNL)return '';
+  var nowS=Math.floor(Date.now()/1000), n=0, err=null, C=PST.cfg;
+  if(nowS>=C.end)return ' P&L test window has ended, no new advice recorded.';
+  for(var i=0;i<C.cohort.length;i++){var sym=C.cohort[i], c=coin(sym), b4=res.ok[sym+'|4h']; if(!c||!c._fresh||!b4)continue;
+    var s=PST.snaps[sym]||{sym:sym,snaps:[]}; s.snaps=(s.snaps||[]).concat([PNL.snap(nowS,c.spot_setup)]); PST.snaps[sym]=s;
+    PST.bars[sym]=PNL.mergeBars(PST.bars[sym],b4,C.start,nowS);
+    try{ await DB.doc('pnl/s_'+sym).set(s); await DB.doc('pnl/b_'+sym).set(PST.bars[sym]); n++; }catch(e){err=e;}
+  }
+  return err?' P&L test not saved (only editors can save).':(n?' P&L test updated for '+n+' coins.':'');
+}
+function pMarks(){var m={};if(!PST)return m;PST.cfg.cohort.forEach(function(s){var c=coin(s);if(c&&c._live)m[s]=c.price});return m}
+function usd(x,sign){if(x==null||isNaN(x))return '-';var a=Math.abs(x),s=a>=1000?a.toLocaleString('en-US',{maximumFractionDigits:0}):a.toFixed(2);return (x<0?'-':(sign&&x>0?'+':''))+'$'+s}
+function dtl(t){var d=new Date(t*1000);return d.toLocaleDateString([], {day:'numeric',month:'short'})+' '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+function kpi(lab,val,sub,k){return '<div><b>'+lab+'</b><span class="'+(k||'')+'">'+val+'</span>'+(sub?'<div class="note">'+sub+'</div>':'')+'</div>'}
+function curveSvg(cv,cap){
+  if(cv.length<2)return '<p class="note" style="margin:0">The curve starts after the first closed 4H candle following the start. It fills in with each refresh.</p>';
+  var W=640,H=200,L=56,Rr=10,T=10,B=26,xs=cv.map(function(p){return p[0]}),ys=cv.map(function(p){return p[1]/cap*100});
+  var x0=xs[0],x1=xs[xs.length-1]||x0+1,lo=Math.min(0,Math.min.apply(null,ys)),hi=Math.max(0,Math.max.apply(null,ys));if(hi-lo<1){hi+=0.5;lo-=0.5}
+  var X=function(t){return L+(t-x0)/Math.max(1,x1-x0)*(W-L-Rr)},Y=function(v){return T+(hi-v)/(hi-lo)*(H-T-B)};
+  var d=cv.map(function(p,i){return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]/cap*100).toFixed(1)}).join(' '),last=ys[ys.length-1];
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Equity curve">';
+  [hi,(hi+lo)/2,lo].forEach(function(v){s+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="var(--line)"/><text class="m" x="'+(L-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end">'+(v>0?'+':'')+v.toFixed(1)+'%</text>'});
+  s+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+Y(0).toFixed(1)+'" y2="'+Y(0).toFixed(1)+'" stroke="var(--muted)" stroke-dasharray="3 3"/>';
+  s+='<path d="'+d+'" fill="none" stroke="'+(last>=0?'var(--sup)':'var(--res)')+'" stroke-width="2"/>';
+  s+='<text class="m" x="'+L+'" y="'+(H-6)+'">'+dtl(x0).split(' ').slice(0,2).join(' ')+'</text><text class="m" x="'+(W-Rr)+'" y="'+(H-6)+'" text-anchor="end">'+dtl(x1).split(' ').slice(0,2).join(' ')+'</text></svg>';
+  return s}
+function renderPnl(){
+  var h='';
+  if(!PST){ $('main').innerHTML='<div class="card"><h2>Top 20 P&amp;L</h2><p class="note">'+esc(PERR||'Loading the paper test...')+'</p></div>'; return; }
+  var C=PST.cfg, r=PNL.run(PST,PFILT==='rr15'?{minRR1:1.5}:PFILT==='rr2'?{minRR:2}:{},pMarks()), S=r.sum, nowS=Date.now()/1000;
+  var day=Math.max(0,Math.min(C.days,Math.floor((nowS-C.start)/86400))), done=nowS>=C.end;
+  h+='<div class="card"><div class="row" style="margin-bottom:8px"><div class="grow"><h2 style="margin:0">Top 20 P&amp;L paper test</h2><div class="note">Started '+dtl(C.start)+' &middot; ends '+dtl(C.end)+' &middot; '+(done?'<b>finished</b>':'day '+day+' of '+C.days)+' &middot; '+usd(C.size)+' per trade, '+C.fee+'% fee each side</div></div>'
+   +'<div class="chips" style="margin:0"><button class="chip" data-pf="rr15" aria-pressed="'+(PFILT==='rr15')+'">1.5:1 or better to T1</button><button class="chip" data-pf="rr2" aria-pressed="'+(PFILT==='rr2')+'">2:1 or better to T2</button><button class="chip" data-pf="all" aria-pressed="'+(PFILT==='all')+'">Every setup</button></div></div>';
+  h+='<div class="prog" style="margin-bottom:12px"><i style="width:'+(day/C.days*100).toFixed(0)+'%"></i></div>';
+  h+='<div class="kv">'
+   +kpi('Net P&amp;L',usd(S.net,true),(S.netPct>0?'+':'')+S.netPct.toFixed(2)+'% of '+usd(S.cap),S.net>0?'good':S.net<0?'bad':'')
+   +kpi('Win / loss',S.wins+' W &middot; '+S.losses+' L'+(S.be?' &middot; '+S.be+' BE':''),S.winRate==null?'no closed trades yet':S.winRate.toFixed(0)+'% win rate')
+   +kpi('Realized',usd(S.realized,true),S.closed+' closed trade'+(S.closed===1?'':'s'),S.realized>0?'good':S.realized<0?'bad':'')
+   +kpi('Open positions',String(S.open),'unrealized '+usd(S.openPnl,true),S.openPnl>0?'good':S.openPnl<0?'bad':'')
+   +kpi('Pending buy orders',String(S.pending),'waiting for price to reach entry')
+   +kpi('Avg win / avg loss',usd(S.avgW)+' / '+usd(S.avgL),S.pf==null?'profit factor -':'profit factor '+(S.pf===Infinity?'no losses':S.pf.toFixed(2)))
+   +kpi('Max drawdown',usd(S.maxDD),(S.ddPct).toFixed(2)+'% of capital',S.maxDD<0?'bad':'')
+   +kpi('Buy &amp; hold top 20',S.bh==null?'-':pct(S.bh,2),'equal weight, same start'+(S.bh!=null?' &middot; test '+(S.netPct>=S.bh?'ahead':'behind'):''))
+   +'</div></div>';
+  h+='<div class="card"><h3>Equity curve (realized + open, % of capital)</h3>'+curveSvg(S.curve,S.cap)+'</div>';
+  /* per coin */
+  h+='<div class="card"><h2>Coins and current orders</h2><div class="scroll"><table><thead><tr><th>Coin</th><th>Now</th><th class="r">Entry</th><th class="r">Stop</th><th class="r">T1</th><th class="r">T2</th><th class="r">R:R T2</th><th class="r">Price</th><th class="r">Trades</th><th class="r">P&amp;L</th></tr></thead><tbody>';
+  r.coins.forEach(function(k,i){var c=coin(k.sym),px=c?c.price:null,o=k.open,p=k.pending,src=o||p,st,cl='';
+    if(o){st='<span class="pill sup">open'+(o.half?', T1 taken':'')+'</span>';}
+    else if(p){var dd=px?(p.entry/px-1)*100:null;st='<span class="pill acc">buy order</span> <span class="note">'+(dd==null?'':(dd>=0?'at or above price':pct(dd)+' away'))+'</span>';}
+    else if(k.latest&&!k.latest.none&&PFILT!=='all')st='<span class="pill">skipped, below '+(PFILT==='rr2'?'2:1 to T2':'1.5:1 to T1')+'</span>';
+    else if(k.latest&&!k.latest.none)st='<span class="pill">waiting for new advice</span>';
+    else st='<span class="pill warn">'+esc(k.latest?k.latest.state.toLowerCase():'no advice yet')+'</span>';
+    var w=k.trades.filter(function(x){return x.res==='W'}).length,l=k.trades.filter(function(x){return x.res==='L'}).length,pl=k.realized+(o?o.pnl:0);
+    var lv=src||((k.latest&&!k.latest.none)?k.latest:null);
+    h+='<tr class="click" data-go="'+k.sym+'" data-tab="spot"><td><b>'+esc(k.sym)+'</b> <span class="note">#'+(i+1)+'</span></td><td>'+st+'</td>'
+     +'<td class="num r">'+(o?fmt(o.px):lv?fmt(lv.entry):'-')+'</td><td class="num r">'+(o?fmt(o.cs):lv?fmt(lv.stop):'-')+'</td><td class="num r">'+(lv&&lv.t1!=null?fmt(lv.t1):'-')+'</td><td class="num r">'+(lv&&lv.t2!=null?fmt(lv.t2):'-')+'</td>'
+     +'<td class="num r '+(lv&&lv.rr2!=null&&lv.rr2>=2?'good':'')+'">'+(lv?rr(lv.rr2):'-')+'</td><td class="num r">'+fmt(o&&o.mark!=null?o.mark:px)+'</td>'
+     +'<td class="num r">'+(k.trades.length?w+'W '+l+'L':'-')+'</td><td class="num r '+cls(pl)+'">'+(k.trades.length||o?usd(pl,true):'-')+'</td></tr>';
+  });
+  h+='</tbody></table></div><p class="note" style="margin:8px 0 0">Ranked by market cap on the start date. Tap a row for that coin\'s spot setup. Entry, stop and targets of an open position are locked at the fill; buy orders follow the latest refresh.</p></div>';
+  /* trade log */
+  var log=S.all.slice().sort(function(a,b){return b.exitT-a.exitT});
+  h+='<div class="card"><h2>Closed trades</h2>';
+  if(!log.length)h+='<p class="note" style="margin:0">No closed trades yet. Each refresh checks every 4H candle since the start for fills, stops and targets.</p>';
+  else{h+='<div class="scroll"><table><thead><tr><th>Coin</th><th>Bought</th><th class="r">At</th><th>Sold</th><th class="r">Avg exit</th><th>Outcome</th><th class="r">P&amp;L</th><th class="r">%</th></tr></thead><tbody>';
+    log.forEach(function(x){h+='<tr><td><b>'+esc(x.sym)+'</b></td><td class="num">'+dtl(x.entryT)+'</td><td class="num r">'+fmt(x.px)+'</td><td class="num">'+dtl(x.exitT)+'</td><td class="num r">'+fmt(x.exitPx)+'</td><td><span class="pill '+(x.res==='W'?'sup':x.res==='L'?'res':'')+'">'+esc(x.out)+'</span></td><td class="num r '+cls(x.pnl)+'">'+usd(x.pnl,true)+'</td><td class="num r '+cls(x.ret)+'">'+pct(x.ret,2)+'</td></tr>'});
+    h+='</tbody></table></div>';}
+  h+='</div>';
+  var lastBar=Math.max.apply(null,[0].concat(r.coins.map(function(k){return k.last||0})));
+  h+='<details class="how" style="margin-top:0"><summary>Test rules</summary><ul class="note" style="margin:8px 0 0;padding-left:18px">'
+   +'<li><b>Coins:</b> the 20 largest by market cap among the board\'s coins on '+dtl(C.start).split(' ').slice(0,2).join(' ')+': '+esc(C.cohort.join(', '))+'. Fixed for the whole test.</li>'
+   +'<li><b>Advice:</b> each coin\'s Spot setup tab at every full refresh is saved as a snapshot. One position per coin at a time, long only (spot).</li>'
+   +'<li><b>Buy:</b> limit order at the setup entry (buy-zone midpoint). It fills when a 4H candle trades at or below it, at the entry or the candle open if lower. Only candles that open after the snapshot count. Until filled, the order moves to the latest advice.</li>'
+   +'<li><b>Minimum reward-to-risk:</b> by default a setup is bought only if the reward to Target 1 is at least 1.5:1 from its entry; a setup with no target above is skipped because its R:R cannot be measured. The buttons above switch to 2:1 to T2 or to every setup. The filter is applied when the test is replayed, so changing it re-scores the whole test from its start.</li>'
+   +'<li><b>Sell:</b> half at T1, then the stop moves to the entry price; the other half at T2. If no targets exist the position runs until the stop or the end of the test.</li>'
+   +'<li><b>Stop:</b> the setup stop (zone floor minus 1 daily ATR). If a candle touches both the stop and a target, the stop is assumed to hit first.</li>'
+   +'<li><b>After an exit</b> a new order is placed only from advice saved after that exit, so the test never re-buys a stale zone.</li>'
+   +'<li><b>Win</b> = closed trade with positive P&amp;L after fees (a breakeven stop after T1 is a win). Open positions are marked at the latest price'+(Object.keys(pMarks()).length?' (live)':' (last closed 4H candle)')+'.</li>'
+   +'<li><b>Data:</b> closed 4H candles from the board\'s refresh source; last candle checked '+(lastBar?dtl(lastBar):'none yet')+'. Results only move when the board is refreshed. Paper results, no slippage beyond the fee, not financial advice.</li></ul></details>';
+  $('main').innerHTML=h;
+}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-pf]');if(b){PFILT=b.getAttribute('data-pf');renderPnl();}});
+
+/* ---------- boot ---------- */
+function boot(d){
+  DATA=d;
+  $('meta').textContent='Data as of '+d.meta.generated+' · '+d.meta.n+' coins · 4H, 1D and 1W';
+  $('method').textContent=d.meta.method;
+  var t=Date.parse(d.meta.generated.replace(' UTC','Z').replace(' ','T'));
+  if(!isNaN(t)){
+    var hrs=(Date.now()-t)/36e5, el=$('stale');
+    el.hidden=false;
+    if(hrs>24){el.className='pill warn';el.textContent='Zones built '+Math.round(hrs/24*10)/10+' days ago';}
+    else {el.className='pill sup';el.textContent='Zones built '+(hrs<1?'under 1h':Math.round(hrs)+'h')+' ago';}
+  }
+  d.coins.forEach(function(c){var b=null;c.zones.forEach(function(z){if(!b||z.count>b.count||(z.count===b.count&&z.tfs.length>b.tfs.length))b=z});if(b)b.strongest=true});
+  buildNav(); route(); initLive().then(initFull).then(loadPnl,loadPnl);
+}
+fetch('data.json').then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(boot).catch(function(e){
+  $('main').innerHTML='<div class="card"><h2>Data did not load</h2><p class="note">'+esc(e.message)+'. Reload the page, or ask Claude to republish the data file.</p></div>';
+});
+})();
+</script>
+
+
+</body></html>

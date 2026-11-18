@@ -1,0 +1,260 @@
+{
+ "_about": "Coins on the board, in board order. To add a coin: add one line here and its two series to market-data/series.json. removed = rows taken off the board for good (Gold and Silver, owner, 17 Nov 2026): the build drops them instead of keeping their last good version.",
+ "bars": {
+  "coin_4h": 1000,
+  "coin_1d": 1200,
+  "gauge_4h": 5000
+ },
+ "coins": [
+  {
+   "sym": "BTC",
+   "spot_symbol": "BINANCE:BTCUSDT",
+   "fut_symbol": "BINANCE:BTCUSDT.P",
+   "series_4h": "binance/BTCUSDT/4H",
+   "series_1d": "binance/BTCUSDT/1D"
+  },
+  {
+   "sym": "ETH",
+   "spot_symbol": "BINANCE:ETHUSDT",
+   "fut_symbol": "BINANCE:ETHUSDT.P",
+   "series_4h": "binance/ETHUSDT/4H",
+   "series_1d": "binance/ETHUSDT/1D"
+  },
+  {
+   "sym": "BNB",
+   "spot_symbol": "BINANCE:BNBUSDT",
+   "fut_symbol": "BINANCE:BNBUSDT.P",
+   "series_4h": "binance/BNBUSDT/4H",
+   "series_1d": "binance/BNBUSDT/1D"
+  },
+  {
+   "sym": "SOL",
+   "spot_symbol": "BINANCE:SOLUSDT",
+   "fut_symbol": "BINANCE:SOLUSDT.P",
+   "series_4h": "binance/SOLUSDT/4H",
+   "series_1d": "binance/SOLUSDT/1D"
+  },
+  {
+   "sym": "XRP",
+   "spot_symbol": "BINANCE:XRPUSDT",
+   "fut_symbol": "BINANCE:XRPUSDT.P",
+   "series_4h": "binance/XRPUSDT/4H",
+   "series_1d": "binance/XRPUSDT/1D"
+  },
+  {
+   "sym": "ADA",
+   "spot_symbol": "BINANCE:ADAUSDT",
+   "fut_symbol": "BINANCE:ADAUSDT.P",
+   "series_4h": "binance/ADAUSDT/4H",
+   "series_1d": "binance/ADAUSDT/1D"
+  },
+  {
+   "sym": "DOGE",
+   "spot_symbol": "BINANCE:DOGEUSDT",
+   "fut_symbol": "BYBIT:DOGEUSDT.P",
+   "series_4h": "binance/DOGEUSDT/4H",
+   "series_1d": "binance/DOGEUSDT/1D"
+  },
+  {
+   "sym": "LINK",
+   "spot_symbol": "BINANCE:LINKUSDT",
+   "fut_symbol": "BINANCE:LINKUSDT.P",
+   "series_4h": "binance/LINKUSDT/4H",
+   "series_1d": "binance/LINKUSDT/1D"
+  },
+  {
+   "sym": "LTC",
+   "spot_symbol": "BINANCE:LTCUSDT",
+   "fut_symbol": "BINANCE:LTCUSDT.P",
+   "series_4h": "binance/LTCUSDT/4H",
+   "series_1d": "binance/LTCUSDT/1D"
+  },
+  {
+   "sym": "XLM",
+   "spot_symbol": "BINANCE:XLMUSDT",
+   "fut_symbol": "BINANCE:XLMUSDT.P",
+   "series_4h": "binance/XLMUSDT/4H",
+   "series_1d": "binance/XLMUSDT/1D"
+  },
+  {
+   "sym": "SUI",
+   "spot_symbol": "BINANCE:SUIUSDT",
+   "fut_symbol": "BYBIT:SUIUSDT.P",
+   "series_4h": "binance/SUIUSDT/4H",
+   "series_1d": "binance/SUIUSDT/1D"
+  },
+  {
+   "sym": "NEAR",
+   "spot_symbol": "BINANCE:NEARUSDT",
+   "fut_symbol": "BYBIT:NEARUSDT.P",
+   "series_4h": "binance/NEARUSDT/4H",
+   "series_1d": "binance/NEARUSDT/1D"
+  },
+  {
+   "sym": "ICP",
+   "spot_symbol": "BINANCE:ICPUSDT",
+   "fut_symbol": "BYBIT:ICPUSDT.P",
+   "series_4h": "binance/ICPUSDT/4H",
+   "series_1d": "binance/ICPUSDT/1D"
+  },
+  {
+   "sym": "UNI",
+   "spot_symbol": "BINANCE:UNIUSDT",
+   "fut_symbol": "BYBIT:UNIUSDT.P",
+   "series_4h": "binance/UNIUSDT/4H",
+   "series_1d": "binance/UNIUSDT/1D"
+  },
+  {
+   "sym": "AAVE",
+   "spot_symbol": "BINANCE:AAVEUSDT",
+   "fut_symbol": "BYBIT:AAVEUSDT.P",
+   "series_4h": "binance/AAVEUSDT/4H",
+   "series_1d": "binance/AAVEUSDT/1D"
+  },
+  {
+   "sym": "ONDO",
+   "spot_symbol": "BINANCE:ONDOUSDT",
+   "fut_symbol": "BINANCE:ONDOUSDT.P",
+   "series_4h": "binance/ONDOUSDT/4H",
+   "series_1d": "binance/ONDOUSDT/1D"
+  },
+  {
+   "sym": "LDO",
+   "spot_symbol": "BINANCE:LDOUSDT",
+   "fut_symbol": null,
+   "series_4h": "binance/LDOUSDT/4H",
+   "series_1d": "binance/LDOUSDT/1D"
+  },
+  {
+   "sym": "INJ",
+   "spot_symbol": "BINANCE:INJUSDT",
+   "fut_symbol": null,
+   "series_4h": "binance/INJUSDT/4H",
+   "series_1d": "binance/INJUSDT/1D"
+  },
+  {
+   "sym": "WLD",
+   "spot_symbol": "BINANCE:WLDUSDT",
+   "fut_symbol": null,
+   "series_4h": "binance/WLDUSDT/4H",
+   "series_1d": "binance/WLDUSDT/1D"
+  },
+  {
+   "sym": "TAO",
+   "spot_symbol": "BINANCE:TAOUSDT",
+   "fut_symbol": "BINANCE:TAOUSDT.P",
+   "series_4h": "binance/TAOUSDT/4H",
+   "series_1d": "binance/TAOUSDT/1D"
+  },
+  {
+   "sym": "ZEC",
+   "spot_symbol": "BINANCE:ZECUSDT",
+   "fut_symbol": "BYBIT:ZECUSDT.P",
+   "series_4h": "binance/ZECUSDT/4H",
+   "series_1d": "binance/ZECUSDT/1D"
+  },
+  {
+   "sym": "HYPE",
+   "spot_symbol": "BYBIT:HYPEUSDT",
+   "fut_symbol": "BINANCE:HYPEUSDT.P",
+   "series_4h": "binance/HYPEUSDT/4H",
+   "series_1d": "binance/HYPEUSDT/1D"
+  },
+  {
+   "sym": "ENA",
+   "spot_symbol": "BINANCE:ENAUSDT",
+   "fut_symbol": "BYBIT:ENAUSDT.P",
+   "series_4h": "binance/ENAUSDT/4H",
+   "series_1d": "binance/ENAUSDT/1D"
+  },
+  {
+   "sym": "JUP",
+   "spot_symbol": "BINANCE:JUPUSDT",
+   "fut_symbol": "BINANCE:JUPUSDT.P",
+   "series_4h": "binance/JUPUSDT/4H",
+   "series_1d": "binance/JUPUSDT/1D"
+  },
+  {
+   "sym": "PEPE",
+   "spot_symbol": "BINANCE:PEPEUSDT",
+   "fut_symbol": null,
+   "series_4h": "binance/PEPEUSDT/4H",
+   "series_1d": "binance/PEPEUSDT/1D"
+  },
+  {
+   "sym": "PUMP",
+   "spot_symbol": "BINANCE:PUMPUSDT",
+   "fut_symbol": null,
+   "series_4h": "binance/PUMPUSDT/4H",
+   "series_1d": "binance/PUMPUSDT/1D"
+  },
+  {
+   "sym": "ASTER",
+   "spot_symbol": "BINANCE:ASTERUSDT",
+   "fut_symbol": "BINANCE:ASTERUSDT.P",
+   "series_4h": "binance/ASTERUSDT/4H",
+   "series_1d": "binance/ASTERUSDT/1D"
+  },
+  {
+   "sym": "GRAM",
+   "spot_symbol": "BYBIT:GRAMUSDT",
+   "fut_symbol": null,
+   "series_4h": "binance/GRAMUSDT/4H",
+   "series_1d": "binance/GRAMUSDT/1D"
+  },
+  {
+   "sym": "ARB",
+   "spot_symbol": "BINANCE:ARBUSDT",
+   "fut_symbol": "BINANCE:ARBUSDT.P",
+   "series_4h": "binance/ARBUSDT/4H",
+   "series_1d": "binance/ARBUSDT/1D"
+  },
+  {
+   "sym": "AVAX",
+   "spot_symbol": "BINANCE:AVAXUSDT",
+   "fut_symbol": "BINANCE:AVAXUSDT.P",
+   "series_4h": "binance/AVAXUSDT/4H",
+   "series_1d": "binance/AVAXUSDT/1D"
+  },
+  {
+   "sym": "FET",
+   "spot_symbol": "BINANCE:FETUSDT",
+   "fut_symbol": "BINANCE:FETUSDT.P",
+   "series_4h": "binance/FETUSDT/4H",
+   "series_1d": "binance/FETUSDT/1D"
+  },
+  {
+   "sym": "RAY",
+   "spot_symbol": "BINANCE:RAYUSDT",
+   "fut_symbol": "OKX:RAYUSDT.P",
+   "series_4h": "binance/RAYUSDT/4H",
+   "series_1d": "binance/RAYUSDT/1D"
+  },
+  {
+   "sym": "RENDER",
+   "spot_symbol": "BINANCE:RENDERUSDT",
+   "fut_symbol": "BINANCE:RENDERUSDT.P",
+   "series_4h": "binance/RENDERUSDT/4H",
+   "series_1d": "binance/RENDERUSDT/1D"
+  },
+  {
+   "sym": "WIF",
+   "spot_symbol": "BINANCE:WIFUSDT",
+   "fut_symbol": "BINANCE:WIFUSDT.P",
+   "series_4h": "binance/WIFUSDT/4H",
+   "series_1d": "binance/WIFUSDT/1D"
+  }
+ ],
+ "gauges": {
+  "_about": "Keys are the ones series.js buildGauges reads. Values are market-data series ids.",
+  "series": {
+   "T2": "tv/CRYPTOCAP_TOTAL2ES/4H",
+   "T3": "tv/CRYPTOCAP_TOTAL3ES/4H",
+   "TOT": "tv/CRYPTOCAP_TOTAL/4H",
+   "USDT": "tv/CRYPTOCAP_USDT.D/4H",
+   "USDC": "tv/CRYPTOCAP_USDC.D/4H",
+   "ETHBTC": "binance/ETHBTC/4H"
+  }
+ },
+ "removed": ["GOLD", "SILVER"]
+}

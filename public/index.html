@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Paper-Trade</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b101b;--panel:#121d2d;--panel2:#162337;--line:#293a50;--ink:#edf3fb;--muted:#9eb1c8;--accent:#79b9f8;--green:#6ee7ba;--red:#ff8e9d;--amber:#ffd286}
+    *{box-sizing:border-box}body{margin:0;font:14px/1.48 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:radial-gradient(circle at 80% 0%,#18334d 0,transparent 35%),var(--bg)}
+    a{color:var(--accent)}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.46}
+    .wrap{max-width:1280px;margin:auto;padding:25px 24px 60px}.top{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;flex-wrap:wrap}
+    .eyebrow{text-transform:uppercase;letter-spacing:.15em;font-size:11px;font-weight:800;color:var(--accent)}h1{font-size:clamp(27px,4vw,41px);margin:2px 0 6px;letter-spacing:-.035em}h2{font-size:20px;margin:0 0 10px}
+    p{margin:6px 0;color:var(--muted)}.subtitle{max-width:760px}.top-actions{display:flex;align-items:center;gap:8px}.pill{font-size:11px;border:1px solid var(--line);color:var(--muted);padding:5px 10px;border-radius:99px;letter-spacing:.03em}
+    .live-tag{background:#13372f;border-color:#255748;color:var(--green)}.btn{background:var(--panel2);color:var(--ink);border:1px solid #36506b;border-radius:9px;padding:9px 13px;font-weight:650}
+    .btn:hover:not(:disabled){border-color:var(--accent);background:#213b56}.btn.primary{background:#195187;border-color:#2d79ba}.btn.danger{background:#552d39;border-color:#965264}.btn.good{background:#19483e;border-color:#348d72}
+    .tabs{display:flex;gap:9px;margin:22px 0 18px;border-bottom:1px solid var(--line);padding-bottom:12px;overflow-x:auto}
+    .tab{white-space:nowrap;background:transparent;color:var(--muted);border:1px solid transparent;border-radius:10px;padding:10px 13px;font-weight:750}
+    .tab[aria-selected=true]{color:var(--ink);border-color:#35608c;background:#1a334d}.hint{font-size:12px;color:var(--muted)}
+    .banner{border:1px solid #466480;border-radius:12px;padding:10px 15px;background:#183047;margin:14px 0}
+    .card{border:1px solid var(--line);background:var(--panel);border-radius:13px;padding:17px;margin-bottom:14px;min-width:0;box-shadow:0 8px 30px #0002}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .metric .name{color:var(--muted);font-size:12px}.metric .value{font-size:25px;font-weight:780;margin:6px 0 1px;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+    .positive{color:var(--green)!important}.negative{color:var(--red)!important}.neutral{color:var(--ink)}.quiet{font-size:12px;color:var(--muted)}
+    .scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:650px}th{text-transform:uppercase;letter-spacing:.07em;font-size:10px;text-align:left;color:var(--muted);font-weight:780}th,td{border-bottom:1px solid #25364b;padding:9px 10px;vertical-align:middle}td{font-variant-numeric:tabular-nums}tbody tr:last-child td{border-bottom:0}th.num,td.num{text-align:right}
+    .field{width:64px;background:#101b29;border:1px solid #40556d;border-radius:8px;color:var(--ink);padding:7px 6px;text-align:center}
+    .manual-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}.manual-controls .btn{padding:7px 8px;font-size:12px}
+    .foot{margin-top:24px;color:var(--muted);font-size:12px}.error{color:var(--red)}.loading{padding:50px 8px;text-align:center;color:var(--muted)}
+    svg text{fill:var(--muted);font-size:11px}
+    @media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:520px){.wrap{padding:17px 12px 38px}.metric .value{font-size:21px}.top-actions{width:100%}}
+  </style>
+</head>
+<body>
+ <main class="wrap">
+  <div class="top">
+   <div><div class="eyebrow">Fresh paper trading · closed 4H candles</div>
+    <h1>Paper-Trade <span class="pill live-tag">PAPER ONLY</span></h1>
+    <p class="subtitle">Three separate paper accounts started fresh, with nothing carried over from Coin Zones or Paper-Test. They use the same rules as Coin Zones. No orders go to any exchange.</p>
+    <div class="hint"><a href="/">← All dashboards</a></div>
+   </div>
+   <div class="top-actions"><span id="role" class="pill">View only</span><button id="refresh" class="btn primary" hidden title="Rebuild from the candles already saved in Market-Data">Refresh</button></div>
+  </div>
+  <div id="fresh" class="banner" role="status">Loading…</div>
+  <div class="tabs" role="tablist" aria-label="Paper accounts">
+   <button class="tab" type="button" role="tab" data-tab="zone" aria-selected="true">01 · Top 20 P&amp;L — without MSS</button>
+   <button class="tab" type="button" role="tab" data-tab="mss" aria-selected="false">02 · Top 20 P&amp;L — with MSS</button>
+   <button class="tab" type="button" role="tab" data-tab="s083" aria-selected="false">03 · s083 Participation Regime</button>
+  </div>
+  <div id="content" class="loading">Loading…</div>
+  <div class="foot">Paper results only, not financial advice. Manual closes and bookings fill at the last closed 4H candle's close, not a live price. Owner controls work only after signing in through the home site.</div>
+ </main>
+ <script src="app.js" defer></script>
+</body>
+</html>

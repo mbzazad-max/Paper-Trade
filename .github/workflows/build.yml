@@ -1,0 +1,97 @@
+name: Build and deploy Paper-Trade
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why this run (Market-Data, the Refresh button or an owner action fills this in)'
+        required: false
+        default: 'manual'
+      payload:
+        description: 'Owner Close all / Book % action as JSON (blank = just rebuild)'
+        required: false
+        default: ''
+  schedule:
+    - cron: '15 1 * * *'   # daily safety net after the 11:30 and 11:40 Sydney loads (12:15 Sydney summer time); data commits trigger it too
+  push:
+    branches: [main]
+    paths: ['public/*.js', 'public/index.html', 'worker/**', 'build/**', 'config/**', 'reference/**', 'wrangler.jsonc', '.github/workflows/build.yml']
+permissions:
+  contents: write
+concurrency:
+  group: paper-trade
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Coin Zones engine and build files must be byte-identical to the originals
+        run: sha256sum -c --quiet reference/SOURCE_SHA256SUMS
+      - name: Check secrets
+        env:
+          MD: ${{ secrets.MARKET_DATA_TOKEN }}
+        run: '[ -n "$MD" ] || { echo "::error::Secret MARKET_DATA_TOKEN is not set, so the shared data cannot be read. Nothing changed."; exit 1; }'
+      - uses: actions/checkout@v4
+        with:
+          repository: mbzazad-max/market-data
+          token: ${{ secrets.MARKET_DATA_TOKEN }}
+          path: md
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fresh start (fixes the start at the next 4H boundary on the first run; opens the test once it is reached)
+        run: node build/setup.js --resolve
+      - name: Board advice from closed candles (unchanged Coin Zones build.js; records advice only after the start)
+        run: node build/build.js md
+      - name: 4H structure shift and the MSS orders (unchanged Coin Zones structure.js)
+        run: node build/structure.js md --from "$(date -u -d '3 days ago' +%F)" > /dev/null
+      - name: Owner action (Close all / Book %), checked against the last closed 4H candle
+        if: ${{ github.event.inputs.payload != '' }}
+        env:
+          PAPER_ACTION: ${{ github.event.inputs.payload }}
+        run: node build/apply-action.js md
+      - name: Tabs 01 and 02 (without / with MSS)
+        run: node build/paper-output.js
+      - name: Tab 03 (s083)
+        run: node build/s083-paper.js md
+      - name: Tests (manual rules, page)
+        run: |
+          node tests/manual.js
+          npm install --no-save --ignore-scripts --no-audit --no-fund jsdom@26 > /dev/null
+          node tests/render.js jsdom
+      - name: Parity, original Coin Zones page vs build.js on the same candles
+        run: node tests/parity.js md jsdom > parity.json || { cat parity.json; exit 1; }
+      - name: Fresh-start replay (nothing before the start can enter any tab)
+        run: node tests/fresh-start.js md
+      - name: Save (one commit)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/start.json public/data.json public/freshness.json public/paper.json public/s083-paper.json state
+          [ -f public/pnl.json ] && git add public/pnl.json
+          [ -f public/structure.json ] && git add public/structure.json
+          if git diff --cached --quiet; then echo "Nothing changed."; exit 0; fi
+          git commit -q -m "Paper-Trade build $(date -u '+%Y-%m-%d %H:%M') UTC (${{ github.event.inputs.reason || github.event_name }})"
+          for i in 1 2 3 4 5; do git push -q origin HEAD:main && exit 0; git pull -q --rebase origin main; sleep $((i*2)); done
+          echo "::error::Could not save the build."; exit 1
+      - name: Deploy to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          REFRESH_TOKEN: ${{ secrets.MARKET_DATA_TOKEN }}
+        run: |
+          CLOUDFLARE_API_TOKEN="$(printf %s "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
+          CLOUDFLARE_ACCOUNT_ID="$(printf %s "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
+          REFRESH_TOKEN="$(printf %s "$REFRESH_TOKEN" | tr -d '[:space:]')"
+          export CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
+          echo "Cloudflare token length: ${#CLOUDFLARE_API_TOKEN}"
+          echo "Account ID length: ${#CLOUDFLARE_ACCOUNT_ID}"
+          echo "Control token length: ${#REFRESH_TOKEN}"
+          [ "${#CLOUDFLARE_ACCOUNT_ID}" -eq 32 ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID is not 32 characters (is the token in that box?). Built, not deployed."; exit 1; }
+          [ "${#CLOUDFLARE_API_TOKEN}" -ge 40 ] || { echo "::error::CLOUDFLARE_API_TOKEN is too short. Built, not deployed."; exit 1; }
+          npx -y wrangler@4 deploy   # workers_dev is off: only the home site (dashboards) can reach this Worker
+          printf '%s' "$REFRESH_TOKEN" | npx -y wrangler@4 secret put GITHUB_TOKEN
