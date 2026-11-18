@@ -1,4 +1,6 @@
 {
  "_about": "When fresh paper trading starts. \"auto\" = set by the first build on main (after go-live) to the next 4H candle boundary, then never changed. Nothing before this time is ever counted.",
- "start": "auto"
+ "start": 1795003200,
+ "set_at": 1794989913,
+ "set_note": "Set by the first build on main: 2026-11-18 12:00 UTC"
 }
