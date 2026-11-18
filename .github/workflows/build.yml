@@ -10,6 +10,10 @@ on:
         description: 'Owner Close all / Book % action as JSON (blank = just rebuild)'
         required: false
         default: ''
+      force:
+        description: 'Rebuild even if no new candles arrived (the Data check page sends this)'
+        type: boolean
+        default: false
   schedule:
     - cron: '15 1 * * *'   # daily safety net after the 11:30 and 11:40 Sydney loads (12:15 Sydney summer time); data commits trigger it too
   push:
@@ -46,7 +50,7 @@ jobs:
       - name: Fresh start (fixes the start at the next 4H boundary on the first run; opens the test once it is reached)
         run: node build/setup.js --resolve
       - name: Board advice from closed candles (unchanged Coin Zones build.js; records advice only after the start)
-        run: node build/build.js md
+        run: node build/build.js md ${{ inputs.force && '--force' || '' }}
       - name: 4H structure shift and the MSS orders (unchanged Coin Zones structure.js)
         run: node build/structure.js md --from "$(date -u -d '3 days ago' +%F)" > /dev/null
       - name: Owner action (Close all / Book %), checked against the last closed 4H candle
