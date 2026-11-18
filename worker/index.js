@@ -7,7 +7,7 @@
      POST /api/action  -> one Close all / Book % request; the build checks it and fills it at the last closed 4H close
    Secret GITHUB_TOKEN: fine-grained token with Actions read/write on mbzazad-max/Paper-Trade. */
 const WF = 'build.yml';
-const TABS = { zone: 26, mss: 26, s083: 4 };
+const TABS = { zone: 26, mss: 26, s083: 23 };
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 
 async function gh(env, path, init = {}) {

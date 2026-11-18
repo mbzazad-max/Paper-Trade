@@ -6,7 +6,7 @@ Three paper accounts that **start fresh**: no trades, advice snapshots, manual a
 | --- | --- | --- |
 | 01 · Top 20 P&L — without MSS | Coin Zones buy-zone advice, original `pnl.js`: limit buy at the setup entry, stop first, half at T1 (stop to entry), rest at T2. Long only (spot). | Close all · Book N% |
 | 02 · Top 20 P&L — with MSS | Same advice, bought only when a 4H market structure shift up comes from the buy zone (original `structure.js` rewrite of the orders). Long only. | Close all · Book N% |
-| 03 · s083 Participation Regime | Original s083 signal (`stratlab.js signal()`), BTC ETH BNB SOL, long and virtual short, no stop. | Close all · Book N% |
+| 03 · s083 Participation Regime | Original s083 signal (`stratlab.js signal()`), BTC ETH BNB SOL plus 19 alts (23 coins; TRX and HYPE pending data), long and virtual short, no stop. | Close all · Book N% |
 
 The two Top 20 tabs use the 26 Coin Zones coins (the 20 plus ARB, AVAX, FET, RAY, RENDER, WIF), $1,000 per trade, 0.1% fee each side, 365-day window (owner's choices, 18 Nov 2026). s083 uses $1,000 per trade and 0.1% fee each side.
 
