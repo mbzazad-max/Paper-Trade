@@ -74,7 +74,7 @@
         + (owner ? '<td class="r">' + (o ? buttons(mode, c.sym, canBook) : '') + '</td>' : '') + '</tr>';
     });
     h += '</tbody></table></div><p class="note" style="margin:8px 0 0">' + (mode === 'mss'
-      ? 'Buys only when both agree: the board\'s buy zone and a 4H structure shift up from it. Entry is the middle of the shift\'s gap, stop just below the sweep low, targets are the board\'s targets at least 1R away. An order stands for 12 candles.'
+      ? 'Buys only when both agree: the board\'s buy zone and a 4H structure shift up from it. Entry is the middle of the shift\'s price gap (or a retest of the broken level when the shift leaves no gap), stop just below the sweep low, targets are the board\'s targets at least 1R away. An order stands for 12 candles.'
       : 'Buys at the board\'s spot-setup entry (the buy-zone middle) when a 4H candle trades down to it; stop is the setup stop. Orders follow the latest advice until filled.')
       + ' Coin P&amp;L counts every trade in that coin since the start, closed and open. Half is sold at T1 (the stop then moves to the entry), the rest at T2; if a candle touches both the stop and a target, the stop counts first. P&amp;L is after fees.</p></div>';
     var log = [], trades = [];
