@@ -5,7 +5,7 @@
      GET  /api/status  -> state of the latest build run
      POST /api/refresh -> starts the build (unless one is already queued or running)
      POST /api/trade   -> one Close all / Book N% action; the build checks it against the last closed 4H candle
-   Secret GITHUB_TOKEN: fine-grained token with Actions read/write on mbzazad-max/paper-trade. */
+   Secret GITHUB_TOKEN: fine-grained token with Actions read/write on mbzazad-max/Paper-Trade. */
 const WF = 'build.yml';
 const COINS = ['BTC', 'ETH', 'BNB', 'XRP', 'SOL', 'ZEC', 'HYPE', 'DOGE', 'LINK', 'ADA', 'XLM', 'NEAR', 'UNI', 'LTC', 'SUI', 'GRAM', 'TAO', 'ENA', 'PEPE', 'AAVE', 'AVAX', 'ARB', 'RENDER', 'RAY', 'FET', 'WIF'];
 const S083 = ['BTC', 'ETH', 'BNB', 'SOL'];
