@@ -1,0 +1,23 @@
+{
+ "_about": "Strategy test section (added 16 Nov 2026). A separate paper test of one rule-based strategy. It does not touch the board, the engine files or the Top 20 P&L test. To change the strategy or restart the test, edit this file.",
+ "id": "s083",
+ "name": "Participation regime",
+ "source": "Fable 5.2 vs Opus 5.5 build-off, 16 Nov 2026: each AI wrote 100 BTC 4H strategies on candles to 31 Oct 2025; all 200 were scored on the hidden year 1 Nov 2025 to 1 Nov 2026. This is the only one that passed all five tests on BTC and also made money on BTC, ETH, BNB and SOL in both periods.",
+ "params": { "vfast": 42, "vslow": 360, "mom": 84 },
+ "coins": ["BTC", "ETH", "BNB", "SOL"],
+ "start": 1794787200,
+ "size": 1000,
+ "fee": 0.1,
+ "history_from": "2020-04-01",
+ "split": "2025-11-01",
+ "tests_btc": {
+  "note": "BTC, hidden year 1 Nov 2025 to 1 Nov 2026, 0.075% cost per side, 24 trades opened in that year.",
+  "rows": [
+   { "test": "1. New data", "result": "+54.7% in the hidden year (Bitcoin itself fell 29%)", "pass": true },
+   { "test": "2. Settings nudged 20%", "result": "6 of 6 versions stayed profitable", "pass": true },
+   { "test": "3. Double fees", "result": "+49.2%", "pass": true },
+   { "test": "4. Trades shuffled 1,000 times", "result": "lost money in 3.3% of shuffles (pass mark under 10%)", "pass": true },
+   { "test": "5. Luck check", "result": "beat 98.2% of random twins (pass mark 95%)", "pass": true }
+  ]
+ }
+}

@@ -1,66 +1,59 @@
-/* One owner action (Close all / Book N%) from the Worker, passed in by the workflow as env PAPER_ACTION (JSON).
-     {strategy:"zone_pnl", mode:"zone"|"mss", sym, kind:"close"|"book", percent, nonce, trade_id, event_count, last_close}
-     {strategy:"s083", sym, kind, percent, nonce, trade_id, event_count, last_close}
-   The fill price is never taken from the browser: it is the close of the last closed 4H candle in Market-Data, and the
-   action is refused if that candle, the trade or the journal changed since the page showed them. A Book % needs the
-   remaining position to be in net profit. The accepted action is appended to its journal (state/manual/), replayed to
-   prove it applies, and the build then recomputes every tab. Adapted from Paper-Test (apply-zone-action.js, apply-action.js).
-   usage: node build/apply-action.js <market-data dir> */
+/* One owner action from the page, passed in by the workflow as env PAPER_ACTION (JSON):
+     {tab:"zone"|"mss"|"s083", sym, kind:"close"|"book", percent, nonce, trade_id, journal_count, last_close}
+   Accepted only if, right now: the trade is still open with that id, its last closed 4H candle is the one the page showed,
+   the journal has not changed since, and (for a booking) the position is in profit. The fill price is that candle's close,
+   never a price from the browser. The action is replayed with the whole journal before it is saved; a duplicate request
+   (same nonce) is ignored. usage: node build/apply-action.js <market-data dir> */
 'use strict';
 const fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..'), md = path.resolve(process.argv[2] || '../market-data');
-const rd = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
-const fail = (s) => { throw new Error('Action refused: ' + s); };
-const save = (f, a) => { fs.writeFileSync(f + '.tmp', JSON.stringify(a, null, 1) + '\n'); fs.renameSync(f + '.tmp', f); };
+const L = require('./ledger.js'), { signal } = require('./stratlab.js'), { candles } = require('./paper.js');
+const rd = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
+const has = (f) => fs.existsSync(path.join(ROOT, f));
+const save = (f, list) => { const p = path.join(ROOT, f); fs.writeFileSync(p + '.tmp', JSON.stringify(list, null, 1) + '\n'); fs.renameSync(p + '.tmp', p); };
+const no = (why) => { throw new Error('Action refused: ' + why); };
 
-function zone(p) {
-  const MANUAL = require('./zone-manual.js'), file = path.join(ROOT, 'state', 'manual', 'zone-events.json'), events = rd(file);
-  const cf = path.join(ROOT, 'state', 'pnl', 'cfg.json'); if (!fs.existsSync(cf)) fail('the paper test has not started');
-  const cfg = rd(cf);
-  if (!['zone', 'mss'].includes(p.mode) || !cfg.cohort.includes(p.sym)) fail('unknown tab or coin');
-  if (events.some((e) => e.nonce === p.nonce)) { console.log('Duplicate action ignored'); return; }
-  if (p.event_count !== events.length) fail('the journal changed; reload the page and try again');
-  const pub = p.mode === 'mss' ? rd(path.join(ROOT, 'public', 'pnl.json')) : null, st = { cfg, snaps: {}, bars: {} };
-  for (const sym of cfg.cohort) {
-    const sf = path.join(ROOT, 'state', 'pnl', 's_' + sym + '.json'), bf = path.join(ROOT, 'state', 'pnl', 'b_' + sym + '.json');
-    st.snaps[sym] = pub ? pub['s_' + sym] || { sym, snaps: [] } : fs.existsSync(sf) ? rd(sf) : { sym, snaps: [] };
-    st.bars[sym] = fs.existsSync(bf) ? rd(bf) : { t: [], o: [], h: [], l: [], c: [] };
-  }
-  const mine = events.filter((e) => e.mode === p.mode), c = MANUAL.run(st, mine, p.mode).coins.find((x) => x.sym === p.sym), pos = c && c.open;
-  if (!pos || pos.id !== p.trade_id) fail('that trade is no longer open');
-  if (p.last_close !== c.last_close) fail('a new 4H candle has closed; reload and check the position again');
-  const fee = cfg.fee / 100;
-  if (p.kind === 'book' && !((c.last_price - pos.px) - fee * (pos.px + c.last_price) > 0)) fail('the position is not in net profit');
-  const ev = { nonce: p.nonce, mode: p.mode, sym: p.sym, kind: p.kind, percent: p.kind === 'close' ? 100 : p.percent, trade_id: pos.id, t: c.last_close, px: c.last_price };
-  const after = MANUAL.run(st, mine.concat(ev), p.mode).coins.find((x) => x.sym === p.sym);
-  if (!after.applied.includes(p.nonce)) fail('the action did not apply in the replay');
-  save(file, events.concat(ev));
-  console.log('Accepted ' + p.mode + ' ' + p.kind + ' ' + p.sym + ' at the 4H close ' + c.last_price + ' (' + new Date(c.last_close * 1000).toISOString() + ')');
-}
-
-function s083(p) {
-  const { compute } = require('./s083-paper.js'), file = path.join(ROOT, 'state', 'manual', 'events.json'), events = rd(file);
-  if (events.some((e) => e.nonce === p.nonce)) { console.log('Duplicate action ignored'); return; }
-  if (p.event_count !== events.length) fail('the journal changed; reload the page and try again');
-  const before = compute(md, events);
-  if (!before.started) fail('the paper test has not started');
-  const c = before.coins[p.sym]; if (!c) fail('unknown coin');
-  if (!c.open || c.open.id !== p.trade_id) fail('that trade is no longer open');
-  if (p.last_close !== c.last_close) fail('a new 4H candle has closed; reload and check the position again');
-  if (p.kind === 'book' && !(c.open.unrealized > 0)) fail('the position is not in profit');
-  const ev = { nonce: p.nonce, sym: p.sym, kind: p.kind, percent: p.kind === 'close' ? 100 : p.percent, trade_id: c.open.id, t: c.last_close, px: c.price };
-  if (!compute(md, events.concat(ev)).coins[p.sym].applied.includes(p.nonce)) fail('the action did not apply in the replay');
-  save(file, events.concat(ev));
-  console.log('Accepted s083 ' + p.kind + ' ' + p.sym + ' at the 4H close ' + c.price + ' (' + new Date(c.last_close * 1000).toISOString() + ')');
-}
-
-try {
-  const raw = process.env.PAPER_ACTION || '';
-  if (!raw || raw.length > 2048) fail('empty or too long');
+function main() {
+  const raw = process.env.PAPER_ACTION || ''; if (!raw || raw.length > 1024) no('empty or too long');
   const p = JSON.parse(raw);
-  if (!p || !['close', 'book'].includes(p.kind)) fail('unknown action');
-  if (!/^[A-Za-z0-9_-]{12,100}$/.test(p.nonce || '')) fail('bad request id');
-  if (typeof p.trade_id !== 'string' || p.trade_id.length > 120 || !Number.isInteger(p.last_close) || !Number.isInteger(p.event_count)) fail('missing trade, candle or journal count');
-  if (p.kind === 'book' && !(Number.isInteger(p.percent) && p.percent >= 1 && p.percent <= 99)) fail('Book % must be a whole number from 1 to 99');
-  if (p.strategy === 'zone_pnl') zone(p); else if (p.strategy === 's083') s083(p); else fail('unknown tab');
-} catch (e) { console.error('::error::' + (e.message || e)); process.exit(1); }
+  if (!['zone', 'mss', 's083'].includes(p.tab) || !['close', 'book'].includes(p.kind) || !/^[A-Za-z0-9]{16,64}$/.test(p.nonce || '')
+    || typeof p.trade_id !== 'string' || !Number.isInteger(p.journal_count) || !Number.isInteger(p.last_close)) no('malformed request');
+  if (p.kind === 'book' && !(Number.isInteger(p.percent) && p.percent >= 1 && p.percent <= 99)) no('Book % must be a whole number from 1 to 99');
+  const sc = rd('config/start.json'), now = process.env.BUILD_NOW ? Number(process.env.BUILD_NOW) : Math.floor(Date.now() / 1000);
+  if (sc.start === 'auto' || now < sc.start) no('the paper test has not started');
+  const file = p.tab === 's083' ? 'state/manual/s083.json' : 'state/manual/top20.json', journal = rd(file);
+  if (journal.some((a) => a.nonce === p.nonce)) { console.log('Already done (same request id); nothing changed.'); return; }
+  if (p.journal_count !== journal.length) no('another action was saved since the page loaded; reload and try again');
+  let coin, act;
+  if (p.tab === 's083') {
+    const o = rd('config/paper.json').s083; if (!o.coins.includes(p.sym)) no('unknown coin');
+    const B = candles(md, p.sym), sig = signal(B, o.params).sig, opt = { size: o.size, fee: o.fee, join: !!o.join_open_regime };
+    coin = L.runS083(p.sym, B, sig, opt, sc.start, journal);
+    if (!coin.open || coin.open.id !== p.trade_id) no('that trade is no longer open');
+    if (coin.last_close !== p.last_close) no('a new 4H candle has closed since the page loaded; reload and check again');
+    if (p.kind === 'book' && !(coin.open.side * (coin.price / coin.open.entry - 1) > 0)) no('the trade is not in profit');
+    act = { nonce: p.nonce, sym: p.sym, kind: p.kind, percent: p.kind === 'close' ? 100 : p.percent, trade_id: p.trade_id, t: coin.last_close, px: coin.price, at: now };
+    const after = L.runS083(p.sym, B, sig, opt, sc.start, journal.concat(act));
+    if (!after.used.includes(p.nonce)) no('the action did not apply');
+  } else {
+    if (!has('state/pnl/cfg.json')) no('the paper test has not started');
+    const cfg = rd('state/pnl/cfg.json'); if (!cfg.cohort.includes(p.sym)) no('unknown coin');
+    const pub = p.tab === 'mss' ? rd('public/pnl.json') : null, st = { cfg, snaps: {}, bars: {} };
+    for (const s of cfg.cohort) {
+      st.snaps[s] = pub ? pub['s_' + s] || { snaps: [] } : has('state/pnl/s_' + s + '.json') ? rd('state/pnl/s_' + s + '.json') : { snaps: [] };
+      st.bars[s] = has('state/pnl/b_' + s + '.json') ? rd('state/pnl/b_' + s + '.json') : { t: [], o: [], h: [], l: [], c: [] };
+    }
+    const mine = journal.filter((a) => a.mode === p.tab);
+    coin = L.runTop20(p.tab, st, mine).coins.find((c) => c.sym === p.sym);
+    if (!coin.open || coin.open.id !== p.trade_id) no('that trade is no longer open');
+    if (coin.last_close !== p.last_close) no('a new 4H candle has closed since the page loaded; reload and check again');
+    const fee = cfg.fee / 100, px = coin.last_price;
+    if (p.kind === 'book' && !((px - coin.open.px) - (px + coin.open.px) * fee > 0)) no('the position is not in net profit');
+    act = { nonce: p.nonce, mode: p.tab, sym: p.sym, kind: p.kind, percent: p.kind === 'close' ? 100 : p.percent, trade_id: p.trade_id, t: coin.last_close, px, at: now };
+    const after = L.runTop20(p.tab, st, mine.concat(act)).coins.find((c) => c.sym === p.sym);
+    if (!after.used.includes(p.nonce)) no('the action did not apply');
+  }
+  save(file, journal.concat(act));
+  console.log('Saved: ' + p.tab + ' ' + (p.kind === 'close' ? 'Close all' : 'Book ' + p.percent + '%') + ' ' + p.sym + ' at the 4H close ' + act.px + ' (' + new Date(act.t * 1000).toISOString().slice(0, 16) + ' UTC)');
+}
+try { main(); } catch (e) { console.error('::error::' + (e.message || e)); process.exit(1); }
