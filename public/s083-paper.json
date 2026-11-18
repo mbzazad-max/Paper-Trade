@@ -1,1 +1,1 @@
-{"generated":"2026-11-18T08:18:34.000Z","strategy":"s083","name":"Participation regime","start":1795003200,"size":1000,"fee_pct_each_side":0.1,"params":{"vfast":42,"vslow":360,"mom":84},"order":["BTC","ETH","BNB","SOL"],"join_open_regime":false,"event_count":0,"started":false}
+{"generated":"2026-11-18T08:30:35.000Z","strategy":"s083","name":"Participation regime","start":1795003200,"size":1000,"fee_pct_each_side":0.1,"params":{"vfast":42,"vslow":360,"mom":84},"order":["BTC","ETH","BNB","SOL"],"join_open_regime":false,"event_count":0,"started":false}
