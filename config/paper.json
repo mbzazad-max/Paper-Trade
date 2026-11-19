@@ -32,7 +32,12 @@
   ],
   "size": 1000,
   "fee": 0.1,
-  "days": 365
+  "days": 365,
+  "min_rr": {
+   "t1": 1.5,
+   "from": 1795046400,
+   "_about": "Owner's rule, 19 Nov 2026, from the 4H candle opening 11:00 Sydney (00:00 UTC) on a Top 20 setup (both tabs) is only ordered when (T1 - entry) / (entry - stop) >= 1.5. Weaker orders still waiting at that time are cancelled; trades already open keep running."
+  }
  },
  "s083": {
   "id": "s083",

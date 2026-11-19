@@ -49,4 +49,19 @@ const near = (a, b, m) => assert(Math.abs(a - b) < 1e-6, m + ': ' + a + ' vs ' +
   assert.throws(() => L.runS083('AAA', B, sig, opt, start, [{ nonce: 's3', sym: 'AAA', kind: 'book', percent: 40, trade_id: sh.id, t: sh.entry_t }]), /not in profit/);
   assert.throws(() => L.runS083('AAA', B, sig, opt, start, [{ nonce: 's4', sym: 'AAA', kind: 'close', trade_id: 'AAA:L:1', t: tb }]), /does not match/);
 }
+// ---- T1 reward-to-risk filter (config zone.min_rr) ----
+{
+  const { minRR } = require('../build/paper.js'), rule = { t1: 1.5, from: 1000 };
+  const ok = { entry: 100, stop: 90, t1: 115, t2: 130 }, weak = { entry: 100, stop: 90, t1: 114, t2: 140 };
+  const a = minRR([{ t: 500, ...weak }, { t: 1200, ...ok }, { t: 1300, ...weak }, { t: 1400, entry: 100, stop: 90, t1: null, t2: 140 }], rule);
+  assert.deepEqual(a.map((s) => [s.t, !!s.none]), [[500, false], [1000, true], [1200, false], [1300, true], [1400, true]], 'weak advice from the rule on is no setup');
+  assert.equal(minRR([{ t: 500, ...ok }], rule).length, 1, 'a standing order that passes is kept');
+  assert.equal(minRR([{ t: 500, none: true, state: 'NO SETUP' }], rule).length, 1, 'no setup stays as it is');
+  // a weak order standing at the rule's start never fills after it; one placed before it fills as before
+  const B = { t: [], o: [], h: [], l: [], c: [] }; for (let i = 0; i < 6; i++) { B.t.push(1000 + (i - 3) * 14400); B.o.push(101); B.h.push(102); B.l.push(i === 4 ? 99 : 100.5); B.c.push(101); }
+  const R = { start: B.t[0], end: B.t[5] + 14400, size: 1000, fee: 0.1, cohort: ['X'] }, snaps = [{ t: B.t[0] - 60, ...weak }];
+  const run = (S) => L.runTop20('zone', { cfg: R, snaps: { X: { snaps: S } }, bars: { X: B } }, []).coins[0];
+  assert(run(snaps).open, 'without the rule the weak order fills');
+  assert(!run(minRR(snaps, { t1: 1.5, from: B.t[3] })).open, 'with the rule it is cancelled');
+}
 console.log('manual rules: ok');

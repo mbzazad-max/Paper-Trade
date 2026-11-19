@@ -7,7 +7,7 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..'), md = path.resolve(process.argv[2] || '../market-data');
-const L = require('./ledger.js'), { signal } = require('./stratlab.js'), { candles } = require('./paper.js');
+const L = require('./ledger.js'), { signal } = require('./stratlab.js'), { candles, minRR } = require('./paper.js');
 const rd = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 const has = (f) => fs.existsSync(path.join(ROOT, f));
 const save = (f, list) => { const p = path.join(ROOT, f); fs.writeFileSync(p + '.tmp', JSON.stringify(list, null, 1) + '\n'); fs.renameSync(p + '.tmp', p); };
@@ -43,6 +43,8 @@ function main() {
       st.snaps[s] = pub ? pub['s_' + s] || { snaps: [] } : has('state/pnl/s_' + s + '.json') ? rd('state/pnl/s_' + s + '.json') : { snaps: [] };
       st.bars[s] = has('state/pnl/b_' + s + '.json') ? rd('state/pnl/b_' + s + '.json') : { t: [], o: [], h: [], l: [], c: [] };
     }
+    const rule = rd('config/paper.json').zone.min_rr;     // same T1 reward-to-risk filter as build/paper.js
+    if (rule) for (const s of cfg.cohort) st.snaps[s] = { ...st.snaps[s], snaps: minRR(st.snaps[s].snaps, rule) };
     const mine = journal.filter((a) => a.mode === p.tab);
     coin = L.runTop20(p.tab, st, mine).coins.find((c) => c.sym === p.sym);
     if (!coin.open || coin.open.id !== p.trade_id) no('that trade is no longer open');

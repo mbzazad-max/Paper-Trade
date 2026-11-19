@@ -33,6 +33,20 @@ function checkJournal(list, start, keys) {
   }
 }
 
+/* T1 reward-to-risk filter. Advice saved from `from` on whose T1 is under `t1` R becomes {none, state:'T1 under 1.5R'}.
+   Advice still standing at `from` (an unfilled order) gets the same check by a "no setup" placed at `from`, so a weak
+   order made before the rule cannot fill after it. Trades already open at `from` keep their own stop and targets. */
+const rrT1 = (s) => (s && !s.none && s.entry != null && s.stop != null && s.t1 != null && s.stop < s.entry ? (s.t1 - s.entry) / (s.entry - s.stop) : null);
+function minRR(snaps, rule) {
+  const S = (snaps || []).slice().sort((a, b) => a.t - b.t), weak = (s) => !s.none && !(rrT1(s) >= rule.t1 - 1e-9);
+  const tag = (s) => ({ t: s.t, none: true, state: 'T1 under ' + rule.t1 + 'R', was: { entry: s.entry, stop: s.stop, t1: s.t1, t2: s.t2, rr_t1: rrT1(s) } });
+  const before = S.filter((s) => s.t < rule.from), standing = before[before.length - 1];
+  const out = before.slice();
+  if (standing && weak(standing) && !S.some((s) => s.t === rule.from)) out.push(tag({ ...standing, t: rule.from }));
+  for (const s of S) if (s.t >= rule.from) out.push(weak(s) ? tag(s) : s);
+  return out;
+}
+
 function top20(sc) {
   const z = rd('config/paper.json').zone, journal = rd('state/manual/top20.json');
   const base = { generated: new Date(NOW * 1000).toISOString(), start: sc.start, cohort: z.cohort, size: z.size, fee: z.fee, journal_count: journal.length };
@@ -51,6 +65,9 @@ function top20(sc) {
     for (const s of st.zone.snaps[sym].snaps.concat(st.mss.snaps[sym].snaps)) if (s.t < cfg.start) throw new Error('advice from before the start: ' + sym);
     for (const t of st.zone.bars[sym].t) if (t < cfg.start) throw new Error('candle from before the start: ' + sym);
   }
+  // Owner's rule (19 Nov 2026): from z.min_rr.from on, a setup is only ordered when T1 pays at least z.min_rr.t1 x the risk.
+  // Weaker advice becomes "no setup" for both tabs; PNL.run gets the same filtered advice, so the pnl.js check still holds.
+  if (z.min_rr) for (const mode of ['zone', 'mss']) for (const sym of cfg.cohort) st[mode].snaps[sym] = { ...st[mode].snaps[sym], snaps: minRR(st[mode].snaps[sym].snaps, z.min_rr) };
   const tab = {};
   for (const mode of ['zone', 'mss']) {
     const acts = journal.filter((a) => a.mode === mode), mine = L.runTop20(mode, st[mode], acts), pnl = PNL.run(st[mode], {});
@@ -97,4 +114,4 @@ function main() {
     + ' · s083-paper.json: ' + (b.started ? b.sum.open + ' open, ' + b.sum.closed + ' closed, net ' + b.sum.net : 'not started'));
 }
 if (require.main === module) { try { main(); } catch (e) { console.error('::error::' + (e.message || e) + ' (last good files kept)'); process.exit(1); } }
-module.exports = { candles };
+module.exports = { candles, minRR };

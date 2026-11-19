@@ -10,6 +10,8 @@ Three paper accounts that **start fresh**: no trades, advice snapshots, manual a
 
 The two Top 20 tabs use the 26 Coin Zones coins (the 20 plus ARB, AVAX, FET, RAY, RENDER, WIF), $1,000 per trade, 0.1% fee each side, 365-day window (owner's choices, 18 Nov 2026). s083 uses $1,000 per trade and 0.1% fee each side.
 
+Minimum reward-to-risk (owner's rule, 19 Nov 2026, `config/paper.json` `zone.min_rr`): from the 4H candle opening 00:00 UTC on 19 Nov, a Top 20 setup in both tabs is only ordered when T1 pays at least 1.5x the risk, `(T1 - entry) / (entry - stop) >= 1.5`. Weaker advice shows as "T1 under 1.5R"; orders still waiting at that time were cancelled, trades already open run to their own stop and targets. `PNL.run` is given the same filtered advice, so the pnl.js check still holds.
+
 ## Fresh start
 
 - `config/start.json` holds `"auto"` until go-live. The first build on `main` sets it to the **next 4H candle boundary** and it never changes after that (`build/setup.js`).
