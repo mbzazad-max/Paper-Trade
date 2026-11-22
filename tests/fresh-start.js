@@ -21,6 +21,8 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-fresh-')), REPO = path.joi
 execFileSync('cp', ['-r', ROOT, REPO]); for (const x of ['.git', 'md', 'node_modules']) fs.rmSync(path.join(REPO, x), { recursive: true, force: true }); fs.rmSync(path.join(REPO, 'state', 'pnl'), { recursive: true, force: true });
 for (const f of ['paper.json', 's083-paper.json', 'pnl.json', 'structure.json', 'freshness.json']) fs.rmSync(path.join(REPO, 'public', f), { force: true });
 fs.writeFileSync(path.join(REPO, 'state/manual/top20.json'), '[]'); fs.writeFileSync(path.join(REPO, 'state/manual/s083.json'), '[]');
+// the copy starts from "auto" (as before go-live): the live repo's fixed start must not decide what this replay calls "before the start"
+fs.writeFileSync(path.join(REPO, 'config/start.json'), JSON.stringify({ start: 'auto' }));
 const rd = (f) => JSON.parse(fs.readFileSync(path.join(REPO, f), 'utf8'));
 function cutMD(now) {                                   // Market-Data as it was at `now`: closed candles only
   const M = { series: {} };
