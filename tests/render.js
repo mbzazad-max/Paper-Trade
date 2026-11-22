@@ -1,4 +1,4 @@
-/* Opens public/index.html (with cloud.js and app.js) in jsdom and checks the three tabs with no page errors:
+/* Opens public/index.html (with cloud.js and app.js) in jsdom and checks the two tabs with no page errors:
      1. the real built files (before the start: "Not started" on every tab, no buttons);
      2. made-up started data as a visitor (no buttons, no Refresh) and as the signed-in owner (Book / Close all on
         open positions only, and a click sends the right request to /api/paper-trade/action).
@@ -15,7 +15,7 @@ function started() {
     open: open ? { id: mode + ':' + sym + ':' + (T + 14400), entry_t: T + 14400, entry: 10, stop: 9, now_stop: 9, t1: 12, t2: 14, half: false, left_pct: 100, usd: 12.5, mark: 10.2 } : null,
     pending: open ? null : { since: T, entry: 9, stop: 8, t1: 11, t2: 12 } });
   const paper = { started: true, start: T, cohort: ['BTC', 'ETH'], size: 1000, fee: 0.1, journal_count: 2, generated: new Date(LC * 1000).toISOString(),
-    zone: { sum: sum(0), coins: [coin('BTC', true, 'zone'), coin('ETH', false, 'zone')] }, mss: { sum: sum(1), coins: [coin('BTC', false, 'mss'), coin('ETH', false, 'mss')] } };
+    mss: { sum: sum(0), coins: [coin('BTC', true, 'mss'), coin('ETH', false, 'mss')] } };
   const c = (open) => ({ price: 100, last_close: LC, signal: open ? -1 : 1, waiting: open ? 0 : 1, realized: 0, unrealized: open ? 4 : 0, net: open ? 4 : 0, trades: [], log: [],
     open: open ? { id: 'BTC:S:' + T, side: -1, entry_t: T, entry: 105, left_pct: 100, mark: 100, unrealized: 4, booked: 0, parts: [] } : null });
   const s083 = { started: true, start: T, name: 'Participation regime', coins: ['BTC', 'ETH', 'BNB', 'SOL'], size: 1000, fee: 0.1, params: { vfast: 42, vslow: 360, mom: 84 }, join: false, journal_count: 3,
@@ -47,36 +47,36 @@ async function open(files, isOwner) {
   await sleep(300);
   return { d: dom.window.document, errors, posts };
 }
-const tabs = async (d, fn) => { for (const t of ['zone', 'mss', 's083']) { d.querySelector('[data-tab="' + t + '"]').click(); await sleep(20); fn(t, d.getElementById('main').textContent); } };
+const tabs = async (d, fn) => { for (const t of ['mss', 's083']) { d.querySelector('[data-tab="' + t + '"]').click(); await sleep(20); fn(t, d.getElementById('main').textContent); } };
 
 (async () => {
   // 1. the real built files
   let { d, errors } = await open(null, false);
-  assert.deepEqual([...d.querySelectorAll('[data-tab]')].map((b) => b.textContent), ['01 · Top 20 P&L — without MSS', '02 · Top 20 P&L — with MSS', '03 · s083 Participation Regime']);
+  assert.deepEqual([...d.querySelectorAll('[data-tab]')].map((b) => b.textContent), ['01 · Top 20 P&L — with MSS', '02 · s083 Participation Regime']);
   assert.equal(d.querySelector('h1').textContent, 'Paper-Trade'); assert(d.querySelector('.dash-back'), 'link back to all dashboards missing');
   const real = JSON.parse(fs.readFileSync(path.join(PUB, 'paper.json'), 'utf8'));
   await tabs(d, (t, txt) => { if (!real.started) assert.match(txt, /Not started yet/, t); assert(txt.length > 40, t + ' empty'); });
   assert.equal(d.querySelectorAll('button[data-do]').length, 0); assert.deepEqual(errors, []);
   // 2a. started, visitor
   ({ d, errors } = await open(started(), false));
-  await tabs(d, (t, txt) => { assert.match(txt, t === 's083' ? /s083 Participation regime/ : t === 'mss' ? /with MSS/ : /without MSS/); assert.doesNotMatch(txt, /Not started/); });
+  await tabs(d, (t, txt) => { assert.match(txt, t === 's083' ? /s083 Participation regime/ : /with MSS/); assert.doesNotMatch(txt, /Not started/); });
   assert.equal(d.querySelectorAll('button[data-do]').length, 0, 'a visitor must not see the buttons'); assert.equal(d.getElementById('ghRefresh').hidden, true, 'a visitor must not see Refresh');
   assert.deepEqual(errors, []);
   // 2b. started, owner
   let posts; ({ d, errors, posts } = await open(started(), true));
   assert.equal(d.getElementById('who').textContent, 'Owner'); assert.equal(d.getElementById('ghRefresh').hidden, false, 'owner should see Refresh');
-  d.querySelector('[data-tab="zone"]').click(); await sleep(20);
-  assert.equal(d.querySelectorAll('button[data-do]').length, 2, 'without MSS: one open position, two buttons');
-  d.querySelector('[data-pct="zone:BTC"]').value = '30'; d.querySelector('button[data-do="book"][data-t="zone"]').click(); await sleep(30);
+  assert.equal(d.querySelector('[data-tab="zone"]'), null, 'the without-MSS tab was removed');
+  d.querySelector('[data-tab="mss"]').click(); await sleep(20);
+  assert.equal(d.querySelectorAll('button[data-do]').length, 2, 'with MSS: one open position, two buttons');
+  d.querySelector('[data-pct="mss:BTC"]').value = '30'; d.querySelector('button[data-do="book"][data-t="mss"]').click(); await sleep(30);
   assert.equal(posts.length, 1); const p0 = { ...posts[0] }; assert.match(p0.nonce, /^[0-9a-f]{32}$/); delete p0.nonce;
-  assert.deepEqual(p0, { tab: 'zone', sym: 'BTC', kind: 'book', percent: 30, trade_id: 'zone:BTC:' + (T + 14400), journal_count: 2, last_close: LC });
+  assert.deepEqual(p0, { tab: 'mss', sym: 'BTC', kind: 'book', percent: 30, trade_id: 'mss:BTC:' + (T + 14400), journal_count: 2, last_close: LC });
   ({ d, errors, posts } = await open(started(), true));
-  d.querySelector('[data-tab="mss"]').click(); await sleep(20); assert.equal(d.querySelectorAll('button[data-do]').length, 0, 'with MSS: nothing open, no buttons');
   d.querySelector('[data-tab="s083"]').click(); await sleep(20);
   assert.match(d.getElementById('main').textContent, /Short \(virtual\)/); assert.match(d.getElementById('main').textContent, /waiting for a new signal/);
   d.querySelector('button[data-do="close"][data-t="s083"]').click(); await sleep(30);
   assert.deepEqual([posts[0].tab, posts[0].sym, posts[0].kind, posts[0].percent, posts[0].journal_count, posts[0].trade_id], ['s083', 'BTC', 'close', 100, 3, 'BTC:S:' + T]);
   assert.deepEqual(errors, []);
-  console.log('render: ok (Coin Zones look; 3 tabs; not-started, visitor and owner views; buttons send the right request)');
+  console.log('render: ok (Coin Zones look; 2 tabs; not-started, visitor and owner views; buttons send the right request)');
   process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });

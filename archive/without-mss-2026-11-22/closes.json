@@ -1,0 +1,57 @@
+[
+ {
+  "nonce": "nlWxvHG4CbOwzcGUJFb5YLMK",
+  "mode": "zone",
+  "sym": "BNB",
+  "kind": "close",
+  "percent": 100,
+  "trade_id": "zone:BNB:1795320000",
+  "t": 1795334400,
+  "px": 540.72,
+  "at": 1795339262
+ },
+ {
+  "nonce": "rIwvqNQE8InOMuEJl12JlriP",
+  "mode": "zone",
+  "sym": "LINK",
+  "kind": "close",
+  "percent": 100,
+  "trade_id": "zone:LINK:1795176000",
+  "t": 1795334400,
+  "px": 8.567,
+  "at": 1795339262
+ },
+ {
+  "nonce": "dIhbaaZ6LLaurY47eMhnEvif",
+  "mode": "zone",
+  "sym": "ADA",
+  "kind": "close",
+  "percent": 100,
+  "trade_id": "zone:ADA:1795320000",
+  "t": 1795334400,
+  "px": 0.1422,
+  "at": 1795339262
+ },
+ {
+  "nonce": "EwiEU3Y7uXiwXlKlDzwRA2U0",
+  "mode": "zone",
+  "sym": "UNI",
+  "kind": "close",
+  "percent": 100,
+  "trade_id": "zone:UNI:1795190400",
+  "t": 1795334400,
+  "px": 4.597,
+  "at": 1795339262
+ },
+ {
+  "nonce": "YvO96dmhgiz8ahwP6Paab388",
+  "mode": "zone",
+  "sym": "AAVE",
+  "kind": "close",
+  "percent": 100,
+  "trade_id": "zone:AAVE:1795233600",
+  "t": 1795334400,
+  "px": 95.63,
+  "at": 1795339262
+ }
+]

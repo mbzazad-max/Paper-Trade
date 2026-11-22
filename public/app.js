@@ -13,7 +13,7 @@
   var when = function (t) { if (!t) return '-'; var d = new Date(t * 1000); return d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
   var kpi = function (lab, val, sub, k) { return '<div><b>' + lab + '</b><span class="' + (k || '') + '">' + val + '</span>' + (sub ? '<div class="note">' + sub + '</div>' : '') + '</div>'; };
   var slug = location.pathname.split('/')[1] || '', API = slug ? '/api/' + slug + '/' : 'api/';
-  var TABS = ['zone', 'mss', 's083'], tab = TABS.indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'zone';
+  var TABS = ['mss', 's083'], tab = TABS.indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'mss';
   var P = null, S = null, owner = false;
 
   function notYet(start) {
@@ -49,9 +49,9 @@
     if (!P) return '<div class="card"><p class="note">Waiting for the first build.</p></div>';
     if (!P.started) return notYet(P.start);
     var d = P[mode], s = d.sum, fee = P.fee / 100, h = '';
-    h += '<div class="card"><div class="row" style="margin-bottom:8px"><div class="grow"><h2 style="margin:0">' + (mode === 'mss' ? 'Top 20 P&amp;L with MSS' : 'Top 20 P&amp;L without MSS') + '</h2>'
+    h += '<div class="card"><div class="row" style="margin-bottom:8px"><div class="grow"><h2 style="margin:0">' + 'Top 20 P&amp;L with MSS' + '</h2>'
       + '<div class="note">Started ' + esc(when(P.start)) + ' &middot; ' + P.cohort.length + ' coins &middot; ' + usd(P.size) + ' per trade, ' + P.fee + '% fee each side &middot; long only (spot)</div></div>'
-      + '<span class="pill ' + (mode === 'mss' ? 'acc' : '') + '">' + (mode === 'mss' ? 'Buy zone + 4H structure shift' : 'Buy zone only') + '</span></div>';
+      + '<span class="pill acc">Buy zone + 4H structure shift</span></div>';
     h += '<div class="kv">' + kpi('Net P&amp;L', usd(s.net, true), pct(s.net_pct) + ' of ' + usd(s.capital), cls(s.net))
       + kpi('Win / loss', s.wins + ' W &middot; ' + s.losses + ' L', s.win_rate == null ? 'no closed trades yet' : Math.round(s.win_rate) + '% win rate')
       + kpi('Realised', usd(s.realized, true), s.closed + ' closed trade' + (s.closed === 1 ? '' : 's'), cls(s.realized))
@@ -132,7 +132,7 @@
     var c = t === 's083' ? S.per[sym] : P[t].coins.filter(function (x) { return x.sym === sym; })[0], o = c && c.open; if (!o) return;
     var share = kind === 'book' ? Number((document.querySelector('[data-pct="' + t + ':' + sym + '"]') || {}).value) : 100;
     if (kind === 'book' && !(Number.isInteger(share) && share >= 1 && share <= 99)) { alert('Enter a whole number from 1 to 99.'); return; }
-    var name = t === 's083' ? 's083' : t === 'mss' ? 'Top 20 with MSS' : 'Top 20 without MSS';
+    var name = t === 's083' ? 's083' : 'Top 20 with MSS';
     if (!confirm((kind === 'book' ? 'Book ' + share + '% of what is left of ' : 'Close all of ') + sym + ' in ' + name + ', at the last closed 4H price ' + fmt(c.price) + '?\n\nPaper only. The other tabs are not changed.')) return;
     var body = { tab: t, sym: sym, kind: kind, percent: share, nonce: nonce(), trade_id: o.id, journal_count: t === 's083' ? S.journal_count : P.journal_count, last_close: c.last_close };
     document.querySelectorAll('button[data-do]').forEach(function (b) { b.disabled = true; });

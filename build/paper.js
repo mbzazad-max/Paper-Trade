@@ -1,5 +1,5 @@
 /* Paper-Trade: writes the three tabs.
-     public/paper.json       tabs 01 (without MSS) and 02 (with MSS)
+     public/paper.json       tab 01 (Top 20 with MSS; the without-MSS tab was closed and removed 22 Nov 2026, see archive/)
      public/s083-paper.json  tab 03 (s083)
    Reads only what this repo recorded since its fresh start: state/pnl (advice + closed 4H candles, written by the unchanged
    build.js), public/pnl.json (the MSS orders the unchanged structure.js makes from that advice), Market-Data 4H candles
@@ -67,9 +67,9 @@ function top20(sc) {
   }
   // Owner's rule (19 Nov 2026): from z.min_rr.from on, a setup is only ordered when T1 pays at least z.min_rr.t1 x the risk.
   // Weaker advice becomes "no setup" for both tabs; PNL.run gets the same filtered advice, so the pnl.js check still holds.
-  if (z.min_rr) for (const mode of ['zone', 'mss']) for (const sym of cfg.cohort) st[mode].snaps[sym] = { ...st[mode].snaps[sym], snaps: minRR(st[mode].snaps[sym].snaps, z.min_rr) };
+  if (z.min_rr) for (const mode of ['mss']) for (const sym of cfg.cohort) st[mode].snaps[sym] = { ...st[mode].snaps[sym], snaps: minRR(st[mode].snaps[sym].snaps, z.min_rr) };
   const tab = {};
-  for (const mode of ['zone', 'mss']) {
+  for (const mode of ['mss']) {
     const acts = journal.filter((a) => a.mode === mode), mine = L.runTop20(mode, st[mode], acts), pnl = PNL.run(st[mode], {});
     const bad = L.sameAsPnl(mine, pnl, acts.map((a) => a.sym));
     if (bad.length) throw new Error(mode + ': differs from Coin Zones pnl.js for ' + bad.join(', '));
@@ -84,7 +84,7 @@ function top20(sc) {
         advice: c.latest ? (c.latest.none ? c.latest.state || 'no setup' : 'setup') : null,
         trades: c.trades.slice(-30).map(trade), log: c.log.map((a) => ({ ...a, px: r(a.px), usd: r(a.usd), left_pct: r(a.left_pct) })) })) };
   }
-  return { ...base, started: true, end: cfg.end, zone: tab.zone, mss: tab.mss };
+  return { ...base, started: true, end: cfg.end, mss: tab.mss };
 }
 
 function s083(md, sc) {
@@ -110,7 +110,7 @@ function main() {
   const md = path.resolve(process.argv[2] || '../market-data'), sc = rd('config/start.json');
   const a = top20(sc), b = s083(md, sc);                     // both worked out before either is written
   out('paper.json', a); out('s083-paper.json', b);
-  console.log('paper.json: ' + (a.started ? 'without MSS net ' + a.zone.sum.net + ', with MSS net ' + a.mss.sum.net + ' (same as pnl.js: ' + a.zone.sum.same_as_pnl_js + ' / ' + a.mss.sum.same_as_pnl_js + ')' : 'not started')
+  console.log('paper.json: ' + (a.started ? 'with MSS net ' + a.mss.sum.net + ' (same as pnl.js: ' + a.mss.sum.same_as_pnl_js + ')' : 'not started')
     + ' · s083-paper.json: ' + (b.started ? b.sum.open + ' open, ' + b.sum.closed + ' closed, net ' + b.sum.net : 'not started'));
 }
 if (require.main === module) { try { main(); } catch (e) { console.error('::error::' + (e.message || e) + ' (last good files kept)'); process.exit(1); } }

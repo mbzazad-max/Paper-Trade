@@ -1,5 +1,5 @@
 /* One owner action from the page, passed in by the workflow as env PAPER_ACTION (JSON):
-     {tab:"zone"|"mss"|"s083", sym, kind:"close"|"book", percent, nonce, trade_id, journal_count, last_close}
+     {tab:"mss"|"s083", sym, kind:"close"|"book", percent, nonce, trade_id, journal_count, last_close}
    Accepted only if, right now: the trade is still open with that id, its last closed 4H candle is the one the page showed,
    the journal has not changed since, and (for a booking) the position is in profit. The fill price is that candle's close,
    never a price from the browser. The action is replayed with the whole journal before it is saved; a duplicate request
@@ -16,7 +16,7 @@ const no = (why) => { throw new Error('Action refused: ' + why); };
 function main() {
   const raw = process.env.PAPER_ACTION || ''; if (!raw || raw.length > 1024) no('empty or too long');
   const p = JSON.parse(raw);
-  if (!['zone', 'mss', 's083'].includes(p.tab) || !['close', 'book'].includes(p.kind) || !/^[A-Za-z0-9]{16,64}$/.test(p.nonce || '')
+  if (!['mss', 's083'].includes(p.tab) || !['close', 'book'].includes(p.kind) || !/^[A-Za-z0-9]{16,64}$/.test(p.nonce || '')
     || typeof p.trade_id !== 'string' || !Number.isInteger(p.journal_count) || !Number.isInteger(p.last_close)) no('malformed request');
   if (p.kind === 'book' && !(Number.isInteger(p.percent) && p.percent >= 1 && p.percent <= 99)) no('Book % must be a whole number from 1 to 99');
   const sc = rd('config/start.json'), now = process.env.BUILD_NOW ? Number(process.env.BUILD_NOW) : Math.floor(Date.now() / 1000);

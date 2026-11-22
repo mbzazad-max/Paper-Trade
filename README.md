@@ -1,16 +1,17 @@
 # Paper-Trade
 
-Three paper accounts that **start fresh**: no trades, advice snapshots, manual actions or P&L are carried over from Coin Zones or Paper-Test. They use the same rules as Coin Zones. Claude only loads data; the original Coin Zones code does the logic, GitHub builds, Cloudflare shows it.
+Two paper accounts that **start fresh**: no trades, advice snapshots, manual actions or P&L are carried over from Coin Zones or Paper-Test. They use the same rules as Coin Zones. Claude only loads data; the original Coin Zones code does the logic, GitHub builds, Cloudflare shows it.
 
 | Tab | Rule | Owner buttons |
 | --- | --- | --- |
-| 01 · Top 20 P&L — without MSS | Coin Zones buy-zone advice, original `pnl.js`: limit buy at the setup entry, stop first, half at T1 (stop to entry), rest at T2. Long only (spot). | Close all · Book N% |
-| 02 · Top 20 P&L — with MSS | Same advice, bought only when a 4H market structure shift up comes from the buy zone (original `structure.js` rewrite of the orders). Long only. | Close all · Book N% |
-| 03 · s083 Participation Regime | Original s083 signal (`stratlab.js signal()`), BTC ETH BNB SOL plus 19 alts (23 coins; TRX and HYPE pending data), long and virtual short, no stop. | Close all · Book N% |
+| 01 · Top 20 P&L — with MSS | Coin Zones buy-zone advice, bought only when a 4H market structure shift up comes from the buy zone (original `structure.js` rewrite of the orders). Long only. | Close all · Book N% |
+| 02 · s083 Participation Regime | Original s083 signal (`stratlab.js signal()`), BTC ETH BNB SOL plus 19 alts (23 coins; TRX and HYPE pending data), long and virtual short, no stop. | Close all · Book N% |
 
-The two Top 20 tabs use the 26 Coin Zones coins (the 20 plus ARB, AVAX, FET, RAY, RENDER, WIF), $1,000 per trade, 0.1% fee each side, 365-day window (owner's choices, 18 Nov 2026). s083 uses $1,000 per trade and 0.1% fee each side.
+The Top 20 tab uses the 26 Coin Zones coins (the 20 plus ARB, AVAX, FET, RAY, RENDER, WIF), $1,000 per trade, 0.1% fee each side, 365-day window (owner's choices, 18 Nov 2026). s083 uses $1,000 per trade and 0.1% fee each side.
 
-Minimum reward-to-risk (owner's rule, 19 Nov 2026, `config/paper.json` `zone.min_rr`): from the 4H candle opening 00:00 UTC on 19 Nov, a Top 20 setup in both tabs is only ordered when T1 pays at least 1.5x the risk, `(T1 - entry) / (entry - stop) >= 1.5`. Weaker advice shows as "T1 under 1.5R"; orders still waiting at that time were cancelled, trades already open run to their own stop and targets. `PNL.run` is given the same filtered advice, so the pnl.js check still holds.
+Minimum reward-to-risk (owner's rule, 19 Nov 2026, `config/paper.json` `zone.min_rr`): from the 4H candle opening 00:00 UTC on 19 Nov, a Top 20 setup is only ordered when T1 pays at least 1.5x the risk, `(T1 - entry) / (entry - stop) >= 1.5`. Weaker advice shows as "T1 under 1.5R"; orders still waiting at that time were cancelled, trades already open run to their own stop and targets. `PNL.run` is given the same filtered advice, so the pnl.js check still holds.
+
+**Removed 22 Nov 2026 (owner's request):** the old tab 01 "Top 20 P&L — without MSS". Its 5 open positions were closed at the 08:00 UTC 4H close; final result net -$464.85 (12 trades, 4 won, 8 lost). Record in `archive/without-mss-2026-11-22/`.
 
 ## Fresh start
 
