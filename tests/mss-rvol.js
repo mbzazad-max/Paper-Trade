@@ -9,6 +9,6 @@ if(fs.existsSync(file)){
  let v=JSON.parse(fs.readFileSync(file));
  assert.deepStrictEqual(v.coins.map(x=>x.sym).sort(),['DOGE','ENA','ETH','SOL','ZEC']);
  assert.strictEqual(v.entry_rvol,2);assert.strictEqual(v.exit_rvol,1.5);
- assert(v.total_equity>=0&&v.initial_total===5000&&v.journal_count>=0);
+ assert(v.total_equity>=0&&v.initial_total===10000&&v.journal_count>=0);
 }
 console.log('MSS-RVOL isolated tests pass');
