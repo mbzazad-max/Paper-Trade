@@ -49,7 +49,7 @@ function market(md,now){
  let out={};
  for(let sym of ['BTC','USDT.D',...cfg.coins]){
   let h=input(md,sym,'1H',now),four=input(md,sym,'4H',now);
-  out[sym]={hour:h,p2:cursor(indicators(aggregate(h,2),false)),p3:cursor(indicators(aggregate(h,3),false)),p4:cursor(indicators(four,true)),four};
+  out[sym]={hour:h,p2:indicators(aggregate(h,2),false),p3:indicators(aggregate(h,3),false),p4:indicators(four,true),four};
  }return out;
 }
 function fresh(now,data){
@@ -81,9 +81,9 @@ function simulate(md,prior,journal,now){
  if(!prior)return {state:st,market:data,fresh:true};
  if(!Array.isArray(journal)||journal.length<st.journal_count)throw Error('Manual journal shrank');
  for(let sym of cfg.coins){
-  let c=st.coins[sym],row=data[sym],hrs=row.hour.filter(x=>x.t>c.last_hour),p2=row.p2,p3=row.p3,p4=row.p4;
-  let btc2=data.BTC.p2,btc3=data.BTC.p3,btc4=data.BTC.p4;
-  let us2=data['USDT.D'].p2,us3=data['USDT.D'].p3,us4=data['USDT.D'].p4;
+  let c=st.coins[sym],row=data[sym],hrs=row.hour.filter(x=>x.t>c.last_hour),p2=cursor(row.p2),p3=cursor(row.p3),p4=cursor(row.p4);
+  let btc2=cursor(data.BTC.p2),btc3=cursor(data.BTC.p3),btc4=cursor(data.BTC.p4);
+  let us2=cursor(data['USDT.D'].p2),us3=cursor(data['USDT.D'].p3),us4=cursor(data['USDT.D'].p4);
   // NB cursors must be consumed in time order for each coin.
   for(let x of hrs){
    if(c.last_hour!=null && x.t-c.last_hour>H)throw Error('1H gap for '+sym+' at '+x.t+'; refusing backfill');
