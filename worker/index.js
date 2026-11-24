@@ -30,7 +30,7 @@ async function start(env, inputs) {
 }
 /* only these fields, checked, are passed on; the build checks them again against the data */
 function action(p) {
-  if (!p || typeof p !== 'object' || !(p.tab in TABS) || !['close', 'book'].includes(p.kind)) return null;
+  if (!p || typeof p !== 'object' || !(p.tab in TABS) || !((p.tab === 'mss-rvol' ? ['close','book','hold','release'] : ['close','book']).includes(p.kind))) return null;
   if (typeof p.sym !== 'string' || !/^[A-Z0-9]{2,10}$/.test(p.sym) || typeof p.nonce !== 'string' || !/^[A-Za-z0-9]{16,64}$/.test(p.nonce)) return null;
   if (typeof p.trade_id !== 'string' || p.trade_id.length > 80 || !Number.isInteger(p.journal_count) || !Number.isInteger(p.last_close)) return null;
   if (p.kind === 'book' && !(Number.isInteger(p.percent) && p.percent >= 1 && p.percent <= 99)) return null;
@@ -56,7 +56,7 @@ export default {
           const body = await req.text(); if (body.length > 1024) return json({ error: 'Request too long' }, 400);
           let p; try { p = JSON.parse(body); } catch (e) { return json({ error: 'Not JSON' }, 400); }
           const a = action(p); if (!a) return json({ error: 'Not a valid Close all / Book % request' }, 400);
-          return start(env, { reason: a.tab + ' ' + (a.kind === 'close' ? 'Close all' : 'Book ' + a.percent + '%') + ' ' + a.sym, payload: JSON.stringify(a) });
+          return start(env, { reason: a.tab + ' ' + (a.kind === 'close' ? 'Close all' : a.kind === 'book' ? 'Book ' + a.percent + '%' : a.kind) + ' ' + a.sym, payload: JSON.stringify(a) });
         }
       }
       return json({ error: 'Not found' }, 404);

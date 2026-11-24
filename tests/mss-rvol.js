@@ -8,11 +8,19 @@ const file='public/mss-rvol.json';
 if(fs.existsSync(file)){
  let v=JSON.parse(fs.readFileSync(file));
  assert.deepStrictEqual(v.coins.map(x=>x.sym).sort(),['DOGE','ENA','ETH','SOL','ZEC']);
- assert.strictEqual(v.entry_rvol,2);assert.strictEqual(v.exit_rvol,1.5);
+ assert.strictEqual(v.entry_rvol,2);if(v.shared_wallet)assert.strictEqual(v.exit_rvol,null);
  assert(v.total_equity>=0&&v.initial_total===10000&&v.journal_count>=0);
 }
 const varying=m.indicators(Array.from({length:15},(_,i)=>({t:i*14400,close_t:(i+1)*14400,o:100,h:100+i+1,l:100,c:100,v:10})),true);
 assert.strictEqual(varying[12].atr,null);
 assert.strictEqual(varying[13].atr,7.5);
 assert(Math.abs(varying[14].atr-(7.5*13+15)/14)<1e-10);
+const cfg=require('../config/mss-rvol.json');
+const loss=(p,sl,q)=>q*(p*1.001-sl*.9995*.999);
+let q1=m.positionSize(1600,1440,10000,10000,cfg),q2=m.positionSize(72,64.8,10000,10000,cfg);
+assert(q1>0&&q2>0);
+assert(Math.abs(loss(1600,1440,q1)-50)<1e-8);
+assert(Math.abs(loss(72,64.8,q2)-50)<1e-8);
+assert.strictEqual(m.positionSize(1600,1599,10000,10000,cfg),0);
+const next=m.cursor([{close_t:100,state:1},{close_t:200,state:-1}]);assert.strictEqual(next(99),null);assert.strictEqual(next(199).state,1);assert.strictEqual(next(200).state,-1);
 console.log('MSS-RVOL isolated tests pass');

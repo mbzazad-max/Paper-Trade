@@ -60,6 +60,13 @@ function fresh(now,data){
  return {version:1,created:new Date(now*1000).toISOString(),journal_count:0,coins};
 }
 const fix=x=>Math.round(x*1e8)/1e8;
+function positionSize(buy,stop,cash,equity,opt){
+ const fee=opt.fee_pct/100,slip=opt.slippage_pct/100,cost=buy*(1+fee),loss=cost-stop*(1-slip)*(1-fee);
+ const target=equity*opt.risk_pct/100,cap=equity*opt.max_position_pct/100;
+ // Skip rather than silently take unequal risk if cash or allocation cap binds.
+ if(!(loss>0&&target>0&&stop>0))return 0;
+ const qty=target/loss;return qty*cost<=Math.min(cash,cap)+1e-8?qty:0;
+}
 function calc(p,price){
  let gross=p.qty*price*(1-cfg.fee_pct/100-cfg.slippage_pct/100);
  return gross-p.qty*p.entry*(1+cfg.fee_pct/100);
@@ -76,16 +83,18 @@ function sell(c,sym,fraction,rawPrice,reason,t,at){
  }
  return pnl;
 }
-function simulate(md,prior,journal,now){
- let data=market(md,now),st=prior?JSON.parse(JSON.stringify(prior)):fresh(now,data);
+function simulate(md,prior,journal,now){return simulateData(market(md,now),prior,journal,now);}
+function simulateData(data,prior,journal,now){
+ let st=prior?JSON.parse(JSON.stringify(prior)):fresh(now,data);
  if(!prior)return {state:st,market:data,fresh:true};
  if(!Array.isArray(journal)||journal.length<st.journal_count)throw Error('Manual journal shrank');
+ let jobs=[];
  for(let sym of cfg.coins){
   let c=st.coins[sym],row=data[sym],hrs=row.hour.filter(x=>x.t>c.last_hour),p2=cursor(row.p2),p3=cursor(row.p3),p4=cursor(row.p4);
   let btc2=cursor(data.BTC.p2),btc3=cursor(data.BTC.p3),btc4=cursor(data.BTC.p4);
   let us2=cursor(data['USDT.D'].p2),us3=cursor(data['USDT.D'].p3),us4=cursor(data['USDT.D'].p4);
   // NB cursors must be consumed in time order for each coin.
-  for(let x of hrs){
+  for(let x of hrs)jobs.push({sym,x,run:()=>{
    if(c.last_hour!=null && x.t-c.last_hour>H)throw Error('1H gap for '+sym+' at '+x.t+'; refusing backfill');
    let s2=p2(x.t),s3=p3(x.t),s4=p4(x.t),b2=btc2(x.t),b3=btc3(x.t),b4=btc4(x.t),u2=us2(x.t),u3=us3(x.t),u4=us4(x.t);
    let aligned=!!(s2&&s3&&s4&&b2&&b3&&b4&&u2&&u3&&u4&&
@@ -107,28 +116,41 @@ function simulate(md,prior,journal,now){
     }
    }else if(qualified&&!c.manualBlock){
     let buy=x.o*(1+cfg.slippage_pct/100),stop=buy-3*s4.atr;
-    if(stop>0&&c.cash>0){
-     let investment=c.cash,qty=investment/(buy*(1+cfg.fee_pct/100));
-     c.cash=0;c.qty=qty;c.position={id:sym+'-'+x.t,entry_t:x.t,entry:buy,initial_atr:s4.atr,
+    if(stop>0){
+     let available=cfg.coins.reduce((a,k)=>a+st.coins[k].cash,0);
+     let equity=available+cfg.coins.reduce((a,k)=>a+st.coins[k].qty*st.coins[k].price*(1-cfg.fee_pct/100-cfg.slippage_pct/100),0);
+     let qty=positionSize(buy,stop,Math.min(available,st.hourCash),st.hourEquity,cfg);
+     if(qty>0){
+     let investment=qty*buy*(1+cfg.fee_pct/100);
+     // Per-coin cash is an attribution ledger; transfers do not alter aggregate cash.
+     c.cash-=investment;st.hourCash-=investment;c.qty=qty;c.position={id:sym+'-'+x.t,entry_t:x.t,entry:buy,initial_atr:s4.atr,
       initial_stop:stop,stop,highest:x.o,entry_rvol:s4.rv,entry_cash:investment,qty,
       parts:[],realized:0};
      if(x.l<=stop)sell(c,sym,1,Math.min(x.o,stop),'ATR stop on entry hour',x.t);
      else{c.position.highest=Math.max(c.position.highest,x.h);c.position.stop=Math.max(stop,c.position.highest-4*s4.atr);}
+     }
     }
    }
    c.last_hour=x.t;c.price=x.c;c.updated=x.close_t;
    let equity=c.cash+c.qty*x.c*(1-cfg.fee_pct/100-cfg.slippage_pct/100);
    c.peak=Math.max(c.peak,equity);c.dd=Math.min(c.dd,100*(equity/c.peak-1));
-  }
-  let lastFour=row.four[row.four.length-1];c.last_close=lastFour.close_t;
-  c.price=row.hour[row.hour.length-1].c;
+  }});
  }
+ // Conservative ordering: at a common hourly open do not fund entries from other coins' intrahour exits.
+ jobs.sort((a,b)=>a.x.t-b.x.t||cfg.coins.indexOf(a.sym)-cfg.coins.indexOf(b.sym));
+ for(let i=0;i<jobs.length;){let t=jobs[i].x.t,j=i;while(j<jobs.length&&jobs[j].x.t===t)j++;
+  // Freeze funding/equity at the start of the hour; reserve entry costs as orders are processed.
+  let batch=jobs.slice(i,j);st.hourCash=cfg.coins.reduce((a,k)=>a+st.coins[k].cash,0);st.hourEquity=st.hourCash+cfg.coins.reduce((a,k)=>a+st.coins[k].qty*st.coins[k].price*(1-cfg.fee_pct/100-cfg.slippage_pct/100),0);
+  for(let job of batch)job.run();delete st.hourCash;delete st.hourEquity;i=j;
+ }
+ for(let sym of cfg.coins){let c=st.coins[sym],row=data[sym];c.last_close=row.four.at(-1).close_t;}
  // Apply owner events after all newly available hourly bars have been processed.
  for(let i=st.journal_count;i<journal.length;i++){
   let a=journal[i],c=st.coins[a.sym];
   if(!c||!c.position||c.position.id!==a.trade_id)throw Error('Journal action no longer matches open trade: '+a.nonce);
   if(a.t<c.position.entry_t)throw Error('Manual fill precedes entry: '+a.nonce);
-  sell(c,a.sym,a.kind==='close'?1:a.percent/100,a.px,a.kind==='close'?'Manual close':'Manual profit booking',a.t,a.at);
+  if(a.kind==='hold'||a.kind==='release')c.position.hold=a.kind==='hold';
+  else sell(c,a.sym,a.kind==='close'?1:a.percent/100,a.px,a.kind==='close'?'Manual close':'Manual profit booking',a.t,a.at);
   if(a.kind==='close')c.manualBlock=true;
   let after=c.cash+c.qty*c.price*(1-cfg.fee_pct/100-cfg.slippage_pct/100);
   c.peak=Math.max(c.peak,after);c.dd=Math.min(c.dd,100*(after/c.peak-1));
@@ -150,7 +172,7 @@ function summary(st,data,now){
    realized:fix(c.realized),unrealized:fix(unreal),price:c.price,last_close:c.last_close,
    last_hour:c.last_hour,refresh_at:c.updated,last_4h_price:f4.c,rv_4h:fix(f4.rv||0),state_4h:f4.state,manual_block:c.manualBlock,
    open:p?{id:p.id,entry:p.entry,entry_t:p.entry_t,stop:fix(p.stop),qty:fix(c.qty),entry_rvol:fix(p.entry_rvol),
-       left_pct:fix(100*c.qty/p.qty),pnl:fix(unreal),parts:p.parts}:null,
+       left_pct:fix(100*c.qty/p.qty),hold:!!p.hold,pnl:fix(unreal),parts:p.parts}:null,
    closed:c.closed.length,wins:wins.length,win_rate:c.closed.length?fix(100*wins.length/c.closed.length):null,
    profit_factor:pf,max_dd:fix(c.dd),history:c.closed.slice(-25).map(t=>({
      id:t.id,entry:t.entry,entry_t:t.entry_t,exit_t:t.exit_t,exit_price:t.exit_price,pnl:fix(t.realized),
@@ -159,7 +181,7 @@ function summary(st,data,now){
  lines.sort((a,b)=>b.return_pct-a.return_pct);
  return {version:1,started:true,generated:new Date(now*1000).toISOString(),source:'mbzazad-max/market-data',
   method:'9-way confirmed Swing-7; native 4H + 2H/3H aggregated from 1H',entry_rvol:cfg.entry_rvol,
-  exit_rvol:cfg.exit_rvol,fee_pct:cfg.fee_pct,slippage_pct:cfg.slippage_pct,
+  exit_rvol:null,shared_wallet:true,risk_pct:cfg.risk_pct,max_position_pct:cfg.max_position_pct,available_cash:fix(cfg.coins.reduce((a,k)=>a+st.coins[k].cash,0)),fee_pct:cfg.fee_pct,slippage_pct:cfg.slippage_pct,
   initial_per_coin:cfg.initial_per_coin,initial_total:cfg.initial_per_coin*cfg.coins.length,
   journal_count:st.journal_count,coins:lines,total_equity:fix(total),
   total_return_pct:fix(100*(total/(cfg.initial_per_coin*cfg.coins.length)-1)),
@@ -167,7 +189,7 @@ function summary(st,data,now){
   note:'Paper only; decisions use Market-Data saved candles. 2H/3H coverage is limited by rolling 1H history. A new sleeve waits for future confirmed signals.'};
 }
 function recordManualAction(md,p){
- if(!['close','book'].includes(p.kind)||!cfg.coins.includes(p.sym)||!Number.isInteger(p.journal_count)||
+ if(!['close','book','hold','release'].includes(p.kind)||!cfg.coins.includes(p.sym)||!Number.isInteger(p.journal_count)||
  !Number.isInteger(p.last_close)||typeof p.trade_id!=='string'||!(/^[A-Za-z0-9]{16,64}$/.test(p.nonce||'')))throw Error('Invalid MSS-RVOL action');
  if(p.kind==='book'&&!(Number.isInteger(p.percent)&&p.percent>=1&&p.percent<=99))throw Error('Invalid booking percent');
  let prior=load(stateFile,null),journal=load(journalFile,[]);if(!prior)throw Error('MSS-RVOL not started yet');
@@ -198,4 +220,4 @@ function main(){
  console.log('MSS-RVOL: '+report.coins.length+' sleeves, '+report.coins.filter(x=>x.open).length+' open, $'+report.total_pnl+' P&L');
 }
 if(require.main===module){try{main()}catch(e){console.error('::error::MSS-RVOL: '+(e.message||e));process.exit(1)}}
-module.exports={aggregate,indicators,simulate,summary,recordManualAction};
+module.exports={aggregate,indicators,simulate,simulateData,summary,recordManualAction,positionSize,cursor};
