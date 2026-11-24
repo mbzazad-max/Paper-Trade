@@ -4,12 +4,12 @@
   "journal_count": 0,
   "coins": {
     "ETH": {
-      "cash": 1000,
+      "cash": 2000,
       "qty": 0,
       "position": null,
       "closed": [],
       "realized": 0,
-      "peak": 1000,
+      "peak": 2000,
       "dd": 0,
       "last_hour": 1795507200,
       "manualBlock": false,
@@ -18,12 +18,12 @@
       "updated": null
     },
     "SOL": {
-      "cash": 1000,
+      "cash": 2000,
       "qty": 0,
       "position": null,
       "closed": [],
       "realized": 0,
-      "peak": 1000,
+      "peak": 2000,
       "dd": 0,
       "last_hour": 1795507200,
       "manualBlock": false,
@@ -32,12 +32,12 @@
       "updated": null
     },
     "ENA": {
-      "cash": 1000,
+      "cash": 2000,
       "qty": 0,
       "position": null,
       "closed": [],
       "realized": 0,
-      "peak": 1000,
+      "peak": 2000,
       "dd": 0,
       "last_hour": 1795507200,
       "manualBlock": false,
@@ -46,12 +46,12 @@
       "updated": null
     },
     "DOGE": {
-      "cash": 1000,
+      "cash": 2000,
       "qty": 0,
       "position": null,
       "closed": [],
       "realized": 0,
-      "peak": 1000,
+      "peak": 2000,
       "dd": 0,
       "last_hour": 1795507200,
       "manualBlock": false,
@@ -60,12 +60,12 @@
       "updated": null
     },
     "ZEC": {
-      "cash": 1000,
+      "cash": 2000,
       "qty": 0,
       "position": null,
       "closed": [],
       "realized": 0,
-      "peak": 1000,
+      "peak": 2000,
       "dd": 0,
       "last_hour": 1795507200,
       "manualBlock": false,

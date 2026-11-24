@@ -8,13 +8,13 @@
   "exit_rvol": 1.5,
   "fee_pct": 0.1,
   "slippage_pct": 0.05,
-  "initial_per_coin": 1000,
-  "initial_total": 5000,
+  "initial_per_coin": 2000,
+  "initial_total": 10000,
   "journal_count": 0,
   "coins": [
     {
       "sym": "ETH",
-      "equity": 1000,
+      "equity": 2000,
       "return_pct": 0,
       "realized": 0,
       "unrealized": 0,
@@ -36,7 +36,7 @@
     },
     {
       "sym": "SOL",
-      "equity": 1000,
+      "equity": 2000,
       "return_pct": 0,
       "realized": 0,
       "unrealized": 0,
@@ -58,7 +58,7 @@
     },
     {
       "sym": "ENA",
-      "equity": 1000,
+      "equity": 2000,
       "return_pct": 0,
       "realized": 0,
       "unrealized": 0,
@@ -80,7 +80,7 @@
     },
     {
       "sym": "DOGE",
-      "equity": 1000,
+      "equity": 2000,
       "return_pct": 0,
       "realized": 0,
       "unrealized": 0,
@@ -102,7 +102,7 @@
     },
     {
       "sym": "ZEC",
-      "equity": 1000,
+      "equity": 2000,
       "return_pct": 0,
       "realized": 0,
       "unrealized": 0,
@@ -123,7 +123,7 @@
       "history": []
     }
   ],
-  "total_equity": 5000,
+  "total_equity": 10000,
   "total_return_pct": 0,
   "total_pnl": 0,
   "note": "Paper only; decisions use Market-Data saved candles. 2H/3H coverage is limited by rolling 1H history. A new sleeve waits for future confirmed signals. Fresh start; no historical trades imported."

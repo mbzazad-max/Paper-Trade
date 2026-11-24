@@ -6,7 +6,7 @@
     "DOGE",
     "ZEC"
   ],
-  "initial_per_coin": 1000,
+  "initial_per_coin": 2000,
   "entry_rvol": 2,
   "exit_rvol": 1.5,
   "fee_pct": 0.1,
