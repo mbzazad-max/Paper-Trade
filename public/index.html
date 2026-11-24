@@ -120,6 +120,7 @@ details.how summary{cursor:pointer;font-weight:600}
   <div class="tabs" role="tablist" aria-label="Paper accounts">
     <button type="button" role="tab" data-tab="mss" aria-selected="true">01 · Top 20 P&amp;L — with MSS</button>
     <button type="button" role="tab" data-tab="s083" aria-selected="false">02 · s083 Participation Regime</button>
+    <button type="button" role="tab" data-tab="mss-rvol" aria-selected="false">03 · MSS-RVOL</button>
   </div>
   <main id="main" aria-live="polite"><div class="card"><p class="note">Loading...</p></div></main>
   <details class="how">
@@ -127,11 +128,13 @@ details.how summary{cursor:pointer;font-weight:600}
     <p class="note"><b>Fresh start.</b> Both accounts began empty at the start time shown above. No trades, advice or results were carried over from Coin Zones or anywhere else.</p>
     <p class="note"><b>Same rules as Coin Zones.</b> Tab 01 replays the board's own spot-setup advice with the board's own paper-test rules, buying only when a 4H market structure shift up comes from the buy zone. Tab 02 is the s083 rule from the board's Strategy test. Everything uses closed 4H candles from the shared Market-Data store and is rebuilt when new candles arrive, once a day, or when you press Refresh.</p>
     <p class="note"><b>Your buttons (owner only).</b> <b>Close all</b> sells what is left of a position. <b>Book %</b> sells that share of what is left and needs it to be in profit after fees. Both fill at the close of the last closed 4H candle, never at a live price, and change only that tab. Each request is checked again by the build; if a new candle has closed or the position changed, it is refused and nothing happens.</p>
+    <p class="note"><b>MSS-RVOL:</b> Separate five-coin paper test. Native closed 4H, 2H/3H derived from saved closed 1H, volume-confirmed entries and structure exits, protective ATR stop, separate persistent ledger and owner-only manual actions. No historic positions are imported.</p>
     <p class="note">Paper results, not financial advice.</p>
   </details>
   <footer id="foot"></footer>
 </div>
 <script src="cloud.js"></script>
+<script src="mss-rvol-ui.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

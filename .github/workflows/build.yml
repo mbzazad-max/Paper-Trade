@@ -60,8 +60,11 @@ jobs:
         run: node build/apply-action.js md
       - name: The three tabs (each coin without a manual action must equal Coin Zones' own pnl.js, or nothing is written)
         run: node build/paper.js md
+      - name: MSS-RVOL separate five-coin paper ledger (Market-Data read-only)
+        run: node build/mss-rvol.js md
       - name: Tests
         run: |
+          node tests/mss-rvol.js
           node tests/manual.js
           node tests/parity-ledgers.js md
           npm install --no-save --ignore-scripts --no-audit --no-fund jsdom@26 > /dev/null
@@ -73,6 +76,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add config/start.json public/data.json public/freshness.json public/paper.json public/s083-paper.json state
+          git add public/mss-rvol.json
           [ -f public/pnl.json ] && git add public/pnl.json
           [ -f public/structure.json ] && git add public/structure.json
           if git diff --cached --quiet; then echo "Nothing changed."; exit 0; fi

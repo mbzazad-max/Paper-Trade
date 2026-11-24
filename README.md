@@ -46,3 +46,9 @@ When Market-Data gets new candles, daily at 01:15 UTC as a safety net, on Refres
 - `node tests/fresh-start.js <market-data>`: the fresh-start replay described above.
 
 Paper results only, not financial advice.
+
+## MSS-RVOL (third independent tab, 24 Nov 2026)
+
+ETH, SOL, ENA, DOGE and ZEC each have a separate $1,000 virtual spot sleeve. A fresh sleeve begins empty and only buys at the next qualified entry; it never imports or force-opens old trades. GitHub Market-Data supplies saved 1H and native 4H candles, while the engine derives complete closed 2H/3H from 1H. Nine-way bullish coin/BTC and bearish USDT.D Swing-7 states, RVOL(20) >= 2.0 on the latest closed 4H coin candle; next simulated hourly open. Automatic exit: bearish coin 4H MSS plus bearish closed 4H candle and RVOL >= 1.5, OR the protective 3xATR initial/4xATR trailing stop, whichever comes first. Trade fees 0.10% and slippage 0.05% per side. The volume-confirmed structure exit is the user's optional exit variation; it differs from the original unfiltered structure-exit baseline.
+
+The new engine is isolated in build/mss-rvol.js; it persists state/mss-rvol.json and state/manual/mss-rvol.json, publishes public/mss-rvol.json, and adds public/mss-rvol-ui.js. Owner-only Close All and Book % actions are verified in the same workflow, filled at the most recent completed native 4H candle close. Book % requires net profit. A manual full close prevents automatic reopening until the entry alignment resets. The UI ranks all five assets by marked-to-market return and shows unrealized/realized P&L, win rate, DD and trade history. Rolling hourly history limits 2H/3H lookback; the ledger is incremental and refuses gaps instead of silently backfilling. It will show no automatic trade until a new qualifying hourly bar arrives after activation. Market-Data is never modified.
