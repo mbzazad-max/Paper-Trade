@@ -77,7 +77,7 @@ function sell(c,sym,fraction,rawPrice,reason,t,at){
  return pnl;
 }
 function simulate(md,prior,journal,now){
- let data=market(md,now),st=prior?structuredClone(prior):fresh(now,data);
+ let data=market(md,now),st=prior?JSON.parse(JSON.stringify(prior)):fresh(now,data);
  if(!prior)return {state:st,market:data,fresh:true};
  if(!Array.isArray(journal)||journal.length<st.journal_count)throw Error('Manual journal shrank');
  for(let sym of cfg.coins){
