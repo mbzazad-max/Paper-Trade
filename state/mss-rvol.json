@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "created": "2026-11-24T09:52:38.000Z",
+  "journal_count": 0,
+  "coins": {
+    "ETH": {
+      "cash": 1000,
+      "qty": 0,
+      "position": null,
+      "closed": [],
+      "realized": 0,
+      "peak": 1000,
+      "dd": 0,
+      "last_hour": 1795507200,
+      "manualBlock": false,
+      "last_close": null,
+      "price": 1692.58,
+      "updated": null
+    },
+    "SOL": {
+      "cash": 1000,
+      "qty": 0,
+      "position": null,
+      "closed": [],
+      "realized": 0,
+      "peak": 1000,
+      "dd": 0,
+      "last_hour": 1795507200,
+      "manualBlock": false,
+      "last_close": null,
+      "price": 71.16,
+      "updated": null
+    },
+    "ENA": {
+      "cash": 1000,
+      "qty": 0,
+      "position": null,
+      "closed": [],
+      "realized": 0,
+      "peak": 1000,
+      "dd": 0,
+      "last_hour": 1795507200,
+      "manualBlock": false,
+      "last_close": null,
+      "price": 0.1001,
+      "updated": null
+    },
+    "DOGE": {
+      "cash": 1000,
+      "qty": 0,
+      "position": null,
+      "closed": [],
+      "realized": 0,
+      "peak": 1000,
+      "dd": 0,
+      "last_hour": 1795507200,
+      "manualBlock": false,
+      "last_close": null,
+      "price": 0.05601,
+      "updated": null
+    },
+    "ZEC": {
+      "cash": 1000,
+      "qty": 0,
+      "position": null,
+      "closed": [],
+      "realized": 0,
+      "peak": 1000,
+      "dd": 0,
+      "last_hour": 1795507200,
+      "manualBlock": false,
+      "last_close": null,
+      "price": 754.9,
+      "updated": null
+    }
+  }
+}
