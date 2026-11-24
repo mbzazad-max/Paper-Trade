@@ -23,7 +23,7 @@
   else{
    h+='<div class="scroll"><table><thead><tr><th>Coin</th><th class="r">Entry</th><th class="r">Last price</th><th class="r">ATR stop</th><th class="r">Unrealized</th><th>Last 4H close</th>'+(owner?'<th>Owner controls</th>':'')+'</tr></thead><tbody>';
    opened.forEach(function(c){
-    var eligible=c.open.entry_t<=c.last_close,positive=c.price>c.open.entry*1.004;
+    var eligible=c.open.entry_t<=c.last_close,positive=c.last_4h_price*(1-(doc.fee_pct+doc.slippage_pct)/100)>c.open.entry*(1+doc.fee_pct/100);
     h+='<tr><td><b>'+esc(c.sym)+'</b></td><td class="r num">'+money(c.open.entry)+'</td><td class="r num">'+money(c.price)+'</td><td class="r num">'+money(c.open.stop)+'</td><td class="r num">'+money(c.open.pnl)+'</td><td class="num">'+dt(c.last_close)+'</td>';
     if(owner)h+='<td><button class="chip sell" data-mrv-action="close" data-mrv-sym="'+c.sym+'" '+(eligible?'':'disabled title="Wait until next closed 4H candle"')+'>Close all</button> <input class="search" style="width:63px" type="number" min="1" max="99" value="50" data-mrv-percent="'+c.sym+'"> <button class="chip book" data-mrv-action="book" data-mrv-sym="'+c.sym+'" '+(positive&&eligible?'':'disabled title="Needs net profit and closed 4H candle"')+'>Book %</button></td>';
     h+='</tr>';
@@ -44,7 +44,7 @@
   if(!c||!c.open)return;
   var input=document.querySelector('[data-mrv-percent="'+sym+'"]'),n=kind==='book'?Number(input&&input.value):100;
   if(kind==='book'&&(!Number.isInteger(n)||n<1||n>99)){alert('Choose 1–99% of remaining position');return}
-  if(!confirm((kind==='close'?'Close all of ':'Book '+n+'% of ')+sym+' at the last verified 4H close '+money(c.price)+'? Paper only.'))return;
+  if(!confirm((kind==='close'?'Close all of ':'Book '+n+'% of ')+sym+' at the last verified 4H close '+money(c.last_4h_price)+'? Paper only.'))return;
   var slug=location.pathname.split('/')[1]||'',api=slug?'/api/'+slug+'/':'api/';
   var req={tab:'mss-rvol',sym:sym,kind:kind,percent:n,nonce:nonce(),trade_id:c.open.id,journal_count:doc.journal_count,last_close:c.last_close};
   b.disabled=true;
