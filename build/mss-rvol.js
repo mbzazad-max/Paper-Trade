@@ -90,7 +90,8 @@ function simulate(md,prior,journal,now){
    let s2=p2(x.t),s3=p3(x.t),s4=p4(x.t),b2=btc2(x.t),b3=btc3(x.t),b4=btc4(x.t),u2=us2(x.t),u3=us3(x.t),u4=us4(x.t);
    let aligned=!!(s2&&s3&&s4&&b2&&b3&&b4&&u2&&u3&&u4&&
     [s2,s3,s4,b2,b3,b4].every(z=>z.state===1)&&[u2,u3,u4].every(z=>z.state===-1));
-   let qualified=aligned&&Number.isFinite(s4.atr)&&s4.atr>0&&Number.isFinite(s4.rv)&&s4.rv>=cfg.entry_rvol;
+   let timely=!!(s2&&s3&&s4&&b2&&b3&&b4&&u2&&u3&&u4&&[s2,b2,u2].every(z=>x.t-z.close_t<=2*H)&&[s3,b3,u3].every(z=>x.t-z.close_t<=3*H)&&[s4,b4,u4].every(z=>x.t-z.close_t<=H4));
+   let qualified=timely&&aligned&&Number.isFinite(s4.atr)&&s4.atr>0&&Number.isFinite(s4.rv)&&s4.rv>=cfg.entry_rvol;
    if(!qualified)c.manualBlock=false;
    let active=c.position;
    if(active){
@@ -129,6 +130,8 @@ function simulate(md,prior,journal,now){
   if(a.t<c.position.entry_t)throw Error('Manual fill precedes entry: '+a.nonce);
   sell(c,a.sym,a.kind==='close'?1:a.percent/100,a.px,a.kind==='close'?'Manual close':'Manual profit booking',a.t,a.at);
   if(a.kind==='close')c.manualBlock=true;
+  let after=c.cash+c.qty*c.price*(1-cfg.fee_pct/100-cfg.slippage_pct/100);
+  c.peak=Math.max(c.peak,after);c.dd=Math.min(c.dd,100*(after/c.peak-1));
   st.journal_count=i+1;
  }
  return {state:st,market:data,fresh:false};
@@ -145,7 +148,7 @@ function summary(st,data,now){
   let f4=data[sym].four.at(-1);
   lines.push({sym,equity:fix(equity),return_pct:fix((equity/cfg.initial_per_coin-1)*100),
    realized:fix(c.realized),unrealized:fix(unreal),price:c.price,last_close:c.last_close,
-   last_hour:c.last_hour,refresh_at:c.updated,rv_4h:fix(f4.rv||0),state_4h:f4.state,manual_block:c.manualBlock,
+   last_hour:c.last_hour,refresh_at:c.updated,last_4h_price:f4.c,rv_4h:fix(f4.rv||0),state_4h:f4.state,manual_block:c.manualBlock,
    open:p?{id:p.id,entry:p.entry,entry_t:p.entry_t,stop:fix(p.stop),qty:fix(c.qty),entry_rvol:fix(p.entry_rvol),
        left_pct:fix(100*c.qty/p.qty),pnl:fix(unreal),parts:p.parts}:null,
    closed:c.closed.length,wins:wins.length,win_rate:c.closed.length?fix(100*wins.length/c.closed.length):null,
