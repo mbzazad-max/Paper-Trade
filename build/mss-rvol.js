@@ -60,12 +60,9 @@ function fresh(now,data){
  return {version:1,created:new Date(now*1000).toISOString(),journal_count:0,coins};
 }
 const fix=x=>Math.round(x*1e8)/1e8;
-function positionSize(buy,stop,cash,equity,opt){
- const fee=opt.fee_pct/100,slip=opt.slippage_pct/100,cost=buy*(1+fee),loss=cost-stop*(1-slip)*(1-fee);
- const target=equity*opt.risk_pct/100,cap=equity*opt.max_position_pct/100;
- // Skip rather than silently take unequal risk if cash or allocation cap binds.
- if(!(loss>0&&target>0&&stop>0))return 0;
- const qty=target/loss;return qty*cost<=Math.min(cash,cap)+1e-8?qty:0;
+function positionSize(buy,cash,opt){
+ const cost=buy*(1+opt.fee_pct/100);
+ return Number.isFinite(cost)&&cost>0&&Number.isFinite(cash)&&cash>0?cash/cost:0;
 }
 function calc(p,price){
  let gross=p.qty*price*(1-cfg.fee_pct/100-cfg.slippage_pct/100);
@@ -117,13 +114,10 @@ function simulateData(data,prior,journal,now){
    }else if(qualified&&!c.manualBlock){
     let buy=x.o*(1+cfg.slippage_pct/100),stop=buy-3*s4.atr;
     if(stop>0){
-     let available=cfg.coins.reduce((a,k)=>a+st.coins[k].cash,0);
-     let equity=available+cfg.coins.reduce((a,k)=>a+st.coins[k].qty*st.coins[k].price*(1-cfg.fee_pct/100-cfg.slippage_pct/100),0);
-     let qty=positionSize(buy,stop,Math.min(available,st.hourCash),st.hourEquity,cfg);
+     let investment=c.cash,qty=positionSize(buy,investment,cfg);
      if(qty>0){
-     let investment=qty*buy*(1+cfg.fee_pct/100);
-     // Per-coin cash is an attribution ledger; transfers do not alter aggregate cash.
-     c.cash-=investment;st.hourCash-=investment;c.qty=qty;c.position={id:sym+'-'+x.t,entry_t:x.t,entry:buy,initial_atr:s4.atr,
+     // Each coin invests only its own available balance, including its own compounded P&L.
+     c.cash=0;c.qty=qty;c.position={id:sym+'-'+x.t,entry_t:x.t,entry:buy,initial_atr:s4.atr,
       initial_stop:stop,stop,highest:x.o,entry_rvol:s4.rv,entry_cash:investment,qty,
       parts:[],realized:0};
      if(x.l<=stop)sell(c,sym,1,Math.min(x.o,stop),'ATR stop on entry hour',x.t);
@@ -136,13 +130,9 @@ function simulateData(data,prior,journal,now){
    c.peak=Math.max(c.peak,equity);c.dd=Math.min(c.dd,100*(equity/c.peak-1));
   }});
  }
- // Conservative ordering: at a common hourly open do not fund entries from other coins' intrahour exits.
+ // Chronological replay; each asset has its own independent cash ledger.
  jobs.sort((a,b)=>a.x.t-b.x.t||cfg.coins.indexOf(a.sym)-cfg.coins.indexOf(b.sym));
- for(let i=0;i<jobs.length;){let t=jobs[i].x.t,j=i;while(j<jobs.length&&jobs[j].x.t===t)j++;
-  // Freeze funding/equity at the start of the hour; reserve entry costs as orders are processed.
-  let batch=jobs.slice(i,j);st.hourCash=cfg.coins.reduce((a,k)=>a+st.coins[k].cash,0);st.hourEquity=st.hourCash+cfg.coins.reduce((a,k)=>a+st.coins[k].qty*st.coins[k].price*(1-cfg.fee_pct/100-cfg.slippage_pct/100),0);
-  for(let job of batch)job.run();delete st.hourCash;delete st.hourEquity;i=j;
- }
+ for(let job of jobs)job.run();
  for(let sym of cfg.coins){let c=st.coins[sym],row=data[sym];c.last_close=row.four.at(-1).close_t;}
  // Apply owner events after all newly available hourly bars have been processed.
  for(let i=st.journal_count;i<journal.length;i++){
@@ -168,7 +158,7 @@ function summary(st,data,now){
   let pf=losses.length?fix(wins.reduce((s,t)=>s+t.realized,0)/-losses.reduce((s,t)=>s+t.realized,0)):null;
   total+=equity;
   let f4=data[sym].four.at(-1);
-  lines.push({sym,equity:fix(equity),return_pct:fix((equity/cfg.initial_per_coin-1)*100),
+  lines.push({sym,equity:fix(equity),cash:fix(c.cash),return_pct:fix((equity/cfg.initial_per_coin-1)*100),
    realized:fix(c.realized),unrealized:fix(unreal),price:c.price,last_close:c.last_close,
    last_hour:c.last_hour,refresh_at:c.updated,last_4h_price:f4.c,rv_4h:fix(f4.rv||0),state_4h:f4.state,manual_block:c.manualBlock,
    open:p?{id:p.id,entry:p.entry,entry_t:p.entry_t,stop:fix(p.stop),qty:fix(c.qty),entry_rvol:fix(p.entry_rvol),
@@ -181,7 +171,7 @@ function summary(st,data,now){
  lines.sort((a,b)=>b.return_pct-a.return_pct);
  return {version:1,started:true,generated:new Date(now*1000).toISOString(),source:'mbzazad-max/market-data',
   method:'9-way confirmed Swing-7; native 4H + 2H/3H aggregated from 1H',entry_rvol:cfg.entry_rvol,
-  exit_rvol:null,shared_wallet:true,risk_pct:cfg.risk_pct,max_position_pct:cfg.max_position_pct,available_cash:fix(cfg.coins.reduce((a,k)=>a+st.coins[k].cash,0)),fee_pct:cfg.fee_pct,slippage_pct:cfg.slippage_pct,
+  exit_rvol:null,shared_wallet:false,allocation_mode:'independent_full_balance',available_cash:fix(cfg.coins.reduce((a,k)=>a+st.coins[k].cash,0)),fee_pct:cfg.fee_pct,slippage_pct:cfg.slippage_pct,
   initial_per_coin:cfg.initial_per_coin,initial_total:cfg.initial_per_coin*cfg.coins.length,
   journal_count:st.journal_count,coins:lines,total_equity:fix(total),
   total_return_pct:fix(100*(total/(cfg.initial_per_coin*cfg.coins.length)-1)),
@@ -198,14 +188,14 @@ function recordManualAction(md,p){
  const now=clock(),test=simulate(md,prior,journal,now),c=test.state.coins[p.sym],last=test.market[p.sym].four.at(-1);
  if(!c.position||c.position.id!==p.trade_id)throw Error('Position no longer open; refresh');
  if(last.close_t!==p.last_close)throw Error('A 4H candle changed; refresh');
- if(c.position.entry_t>last.close_t)throw Error('Wait for next closed 4H candle before manually closing this new trade');
+ if(['close','book'].includes(p.kind)&&c.position.entry_t>last.close_t)throw Error('Wait for next closed 4H candle before manually closing this new trade');
  const px=last.c;
  if(p.kind==='book'){
   let buy=c.position.entry*(1+cfg.fee_pct/100),exit=px*(1-(cfg.slippage_pct+cfg.fee_pct)/100);
   if(!(exit>buy))throw Error('Profit booking only allowed above fees and slippage');
  }
  let a={nonce:p.nonce,kind:p.kind,percent:p.kind==='close'?100:p.percent,sym:p.sym,
-  trade_id:p.trade_id,t:last.close_t,px,at:now};
+  trade_id:p.trade_id,t:['hold','release'].includes(p.kind)?c.last_hour+H:last.close_t,px,at:now};
  // Validate journal application with a fresh calculation before persisting.
  simulate(md,prior,journal.concat(a),now);
  save(journalFile,journal.concat(a));
