@@ -31,7 +31,7 @@ function aggregate(hourly,step){
  return result.sort((a,b)=>a.t-b.t);
 }
 function indicators(bars,isFour){
- let sh=NaN,sl=NaN,trend=0,atr=NaN,old=NaN;
+ let sh=NaN,sl=NaN,trend=0,atr=NaN,old=NaN,seed=0;
  for(let i=0;i<bars.length;i++){
   let x=bars[i];
   if(i>=14){let j=i-7,y=bars[j];if(bars.slice(j-7,j).every(z=>y.h>z.h)&&bars.slice(j+1,j+8).every(z=>y.h>z.h))sh=y.h;
@@ -40,7 +40,7 @@ function indicators(bars,isFour){
   x.state=trend;
   if(isFour){x.rv=i>=20?x.v/(bars.slice(i-20,i).reduce((sum,z)=>sum+z.v,0)/20):null;
    let tr=Number.isFinite(old)?Math.max(x.h-x.l,Math.abs(x.h-old),Math.abs(x.l-old)):x.h-x.l;
-   atr=i===0?tr:(atr*13+tr)/14;x.atr=i>=13?atr:null;old=x.c;
+   if(i<14){seed+=tr;if(i===13)atr=seed/14;}else atr=(atr*13+tr)/14;x.atr=i>=13?atr:null;old=x.c;
   }
  }return bars;
 }
@@ -96,9 +96,9 @@ function simulate(md,prior,journal,now){
    let active=c.position;
    if(active){
     let exited=false;
-    if(s4&&s4.state===-1&&s4.c<s4.o&&s4.rv>=cfg.exit_rvol){
-     sell(c,sym,1,x.o,'Bearish 4H MSS + RVOL',x.t);exited=true;
-    }else if(x.l<=active.stop){
+    if(!active.hold&&s4&&s4.state===-1){
+     sell(c,sym,1,x.o,'Bearish 4H MSS',x.t);exited=true;
+    }else if(!active.hold&&x.l<=active.stop){
      sell(c,sym,1,Math.min(x.o,active.stop),'ATR stop',x.t);exited=true;
     }
     if(!exited&&c.position){

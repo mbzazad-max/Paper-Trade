@@ -11,4 +11,8 @@ if(fs.existsSync(file)){
  assert.strictEqual(v.entry_rvol,2);assert.strictEqual(v.exit_rvol,1.5);
  assert(v.total_equity>=0&&v.initial_total===10000&&v.journal_count>=0);
 }
+const varying=m.indicators(Array.from({length:15},(_,i)=>({t:i*14400,close_t:(i+1)*14400,o:100,h:100+i+1,l:100,c:100,v:10})),true);
+assert.strictEqual(varying[12].atr,null);
+assert.strictEqual(varying[13].atr,7.5);
+assert(Math.abs(varying[14].atr-(7.5*13+15)/14)<1e-10);
 console.log('MSS-RVOL isolated tests pass');
