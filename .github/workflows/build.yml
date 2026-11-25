@@ -69,7 +69,7 @@ jobs:
       - name: MSS-RVOL warning
         if: ${{ steps.mssrvol.outcome == 'failure' }}
         run: echo "::warning::MSS-RVOL did not update this run; other tabs saved. Its page keeps the last good build until the next successful run."
-      - name: RSI Signal Desk candles (BTC ETH SOL BNB, 4H and 1D; the original engine runs in the page)
+      - name: RSI Signal Desk candles (BTC, plus ETH for its link section; 4H and 1D; the original engine runs in the page)
         id: signaldesk
         # Like MSS-RVOL: a failure here must not stop the other tabs from saving; signal-desk.js writes nothing on failure.
         continue-on-error: true
