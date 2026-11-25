@@ -61,7 +61,14 @@ jobs:
       - name: The three tabs (each coin without a manual action must equal Coin Zones' own pnl.js, or nothing is written)
         run: node build/paper.js md
       - name: MSS-RVOL separate five-coin paper ledger (Market-Data read-only)
+        id: mssrvol
+        # A failure here (e.g. a missing 1H candle) must not stop the other tabs from saving.
+        # mss-rvol.js writes nothing on failure, so its last good state and page stay as they were.
+        continue-on-error: true
         run: node build/mss-rvol.js md
+      - name: MSS-RVOL warning
+        if: ${{ steps.mssrvol.outcome == 'failure' }}
+        run: echo "::warning::MSS-RVOL did not update this run; other tabs saved. Its page keeps the last good build until the next successful run."
       - name: Tests
         run: |
           node tests/mss-rvol.js
