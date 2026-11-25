@@ -1,4 +1,5 @@
-/* RSI Signal Desk tab (04): loads closed Binance candles from Market-Data for BTC, ETH, SOL and BNB and writes
+/* RSI Signal Desk tab (04, BTC only): loads closed Binance candles from Market-Data for BTC (the signals) and ETH (only for
+   BTC's ETH <-> BTC link section and ETH check line, as on the original page) and writes
    public/signal-desk.json. All signal logic stays in the original engine (public/signal-desk-engine.js, byte-identical
    to the claude.ai Signal Desk page, checked by reference/SOURCE_SHA256SUMS) and runs in the page, as it did before.
    Windows are the original page's TradingView pulls: 4H = the last 5,000 candles, 1D = from 1 Oct 2020.
@@ -9,7 +10,7 @@ const fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const MD = path.resolve(process.argv[2] || 'md');
 const OUT = path.join(ROOT, 'public/signal-desk.json');
-const ASSETS = ['BTC', 'ETH', 'SOL', 'BNB'];
+const ASSETS = ['BTC', 'ETH'];   // owner, 25 Nov 2026: live for BTC only; ETH is loaded as BTC's comparison coin
 const TF = { '4H': { sec: 14400, keep: 5000 }, '1D': { sec: 86400, from: Date.UTC(2020, 9, 1) / 1000 } };
 const now = process.env.BUILD_NOW ? +process.env.BUILD_NOW : Math.floor(Date.now() / 1000);
 

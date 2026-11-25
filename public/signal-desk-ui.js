@@ -4,12 +4,12 @@
    - candles come from signal-desk.json (Market-Data, Binance spot, closed candles, built on GitHub) instead of the
      viewer's TradingView connector, so the TradingView Refresh button and its auto-refresh are gone (Paper-Trade's
      own Refresh rebuilds it);
-   - assets BTC, ETH, SOL and BNB (ETH is now Binance ETHUSDT instead of Coinbase ETHUSD);
-   - the "ETH <-> BTC link" shows the selected alt against BTC (ETH when BTC is selected, as before);
+   - BTC only (owner, 25 Nov 2026): no asset switch; ETH is loaded only for BTC's ETH <-> BTC link and ETH check line,
+     now Binance ETHUSDT instead of Coinbase ETHUSD (the code can still show ETH, SOL or BNB if they are added to ASSETS);
    - four class names are prefixed sd- so the board's stylesheet does not restyle them. */
 (function(){
 'use strict';
-var DATA=null, ALL={}, ASSET='BTC', ALT='ETH', RES={}, TAB='4H', SYM={}, ASSETS=['BTC','ETH','SOL','BNB'], SRC=null, loading=null;
+var DATA=null, ALL={}, ASSET='BTC', ALT='ETH', RES={}, TAB='4H', SYM={}, ASSETS=['BTC'], PEERS=['ETH'], SRC=null, loading=null;
 var KEY='paper-trade.sd.';
 try{var asv=localStorage.getItem(KEY+'asset');if(ASSETS.indexOf(asv)>=0)ASSET=asv;}catch(e){}
 try{var tsv=localStorage.getItem(KEY+'tab');if(tsv==='1D'||tsv==='4H')TAB=tsv;}catch(e){}
@@ -300,7 +300,7 @@ function cycPeer(tf){var P=peerOf(),pb=lkBars(P,tf);if(!pb||pb.t.length<30)retur
 function html(){
   return '<div id="sd">'+
   '<div class="sd-head"><div><div class="htop"><h2 id="sdTitle">BTC RSI Signal Desk</h2>'+
-    '<div class="asset" role="group" aria-label="Asset">'+ASSETS.map(function(a){return '<button type="button" id="a'+a+'" aria-pressed="'+(a===ASSET)+'">'+a+'</button>'}).join('')+'</div></div>'+
+    (ASSETS.length>1?'<div class="asset" role="group" aria-label="Asset">'+ASSETS.map(function(a){return '<button type="button" id="a'+a+'" aria-pressed="'+(a===ASSET)+'">'+a+'</button>'}).join('')+'</div>':'')+'</div>'+
     '<div class="sub"><span id="sym">BINANCE:BTCUSDT</span> spot · <span id="asof" class="num">loading…</span></div></div>'+
     '<div class="status">Signals only, no orders. Rebuilt on GitHub when new candles arrive and when you press Refresh.</div></div>'+
   '<div class="rules"><span>Buy: RSI(7) closes below 30</span><span>4H filter: price in 0.5–0.786 fib of the last 30-day swing</span><span>1D filter: close above EMA 200</span>'+
@@ -336,7 +336,7 @@ function setAsset(a){if(a===ASSET||!ALL[a])return;ASSET=a;try{localStorage.setIt
 function wire(){
   $('t4H').onclick=function(){TAB='4H';try{localStorage.setItem(KEY+'tab',TAB)}catch(e){}ledger()};
   $('t1D').onclick=function(){TAB='1D';try{localStorage.setItem(KEY+'tab',TAB)}catch(e){}ledger()};
-  ASSETS.forEach(function(a){$('a'+a).onclick=function(){setAsset(a)}});
+  ASSETS.forEach(function(a){var b=$('a'+a);if(b)b.onclick=function(){setAsset(a)}});
 }
 function redraw(){if(!$('sd')||!DATA)return;draw('4H');draw('1D');['4H','1D','1W'].forEach(drawCyc);['4H','1D','1W'].forEach(drawLink)}
 var rt;window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(redraw,150)});
@@ -345,7 +345,7 @@ setInterval(function(){renderCycles();},30000);
 
 function load(){
   if(!loading)loading=fetch('signal-desk.json',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(function(d){
-    SRC=d;ASSETS.forEach(function(a){if(d.assets&&d.assets[a]){ALL[a]={'4H':d.assets[a]['4H'],'1D':d.assets[a]['1D']};SYM[a]=d.assets[a].sym}});
+    SRC=d;ASSETS.concat(PEERS).forEach(function(a){if(d.assets&&d.assets[a]){ALL[a]={'4H':d.assets[a]['4H'],'1D':d.assets[a]['1D']};SYM[a]=d.assets[a].sym}});
     if(!ALL[ASSET])ASSET='BTC';DATA=ALL[ASSET];return d;}).catch(function(e){loading=null;throw e});
   return loading;
 }

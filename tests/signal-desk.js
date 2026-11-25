@@ -4,9 +4,9 @@
    2. data: Market-Data BTC (Binance) = the original page's saved BTC candles (TradingView BINANCE:BTCUSDT) on every
       shared candle, and the engine gives the same BTC trades on both over the original window.
    3. page: the ORIGINAL page and the new tab, opened in jsdom on the same saved candles at the same moment, show the
-      same text in every section (signal panels, link, tentative cycle, stats, months, trades) for BTC and ETH.
-   4. the built public/signal-desk.json has BTC, ETH, SOL and BNB on 4H and 1D, closed candles only, and the tab
-      renders each asset with no page errors.
+      same text in every section (signal panels, ETH <-> BTC link, tentative cycle, stats, months, trades) for BTC.
+   4. the built public/signal-desk.json has BTC (and ETH, BTC's comparison coin) on 4H and 1D, closed candles only,
+      and the tab renders BTC only, with no asset switch and no page errors.
    usage: node tests/signal-desk.js <market-data> <jsdom module path> */
 'use strict';
 const fs = require('fs'), path = require('path'), assert = require('assert/strict');
@@ -69,8 +69,7 @@ async function tab(nowMs, data) {
   const nowMs = (T_END - 3600) * 1000;                                // inside the original's forming 4H candle, as when it was saved
   const asData = { generated: REF.generated, assets: { BTC: { sym: REF.symbol, '4H': REF['4H'], '1D': REF['1D'] }, ETH: { sym: REF.ethSymbol, '4H': REF.ETH['4H'], '1D': REF.ETH['1D'] } } };
   const o = await original(nowMs), n = await tab(nowMs, asData);
-  for (const a of ['BTC', 'ETH']) {
-    if (a === 'ETH') { o.d.getElementById('aETH').click(); n.d.getElementById('aETH').click(); await sleep(50); }
+  for (const a of ['BTC']) {
     const A = text(o.d), B = text(n.d);
     for (const id of IDS) { assert(A[id].length > 10, `${a} ${id}: the original page shows nothing`); assert.equal(B[id], A[id], `${a} ${id}: the tab shows different text from the original page`); }
     o.d.getElementById('t1D').click(); n.d.getElementById('t1D').click(); await sleep(20);
@@ -81,19 +80,17 @@ async function tab(nowMs, data) {
   assert.deepEqual(o.errors, []); assert.deepEqual(n.errors, []);
 
   const built = JSON.parse(fs.readFileSync(path.join(ROOT, 'public/signal-desk.json'), 'utf8')), now = Date.now() / 1000;
-  for (const a of ['BTC', 'ETH', 'SOL', 'BNB']) for (const [tf, sec] of [['4H', 14400], ['1D', 86400]]) {
+  assert.deepEqual(Object.keys(built.assets).sort(), ['BTC', 'ETH'], 'live for BTC only (ETH as its comparison coin)');
+  for (const a of ['BTC', 'ETH']) for (const [tf, sec] of [['4H', 14400], ['1D', 86400]]) {
     const b = built.assets[a][tf]; assert(b && b.t.length >= 300, a + ' ' + tf + ' missing'); assert(b.t[b.t.length - 1] + sec <= now, a + ' ' + tf + ' has a forming candle');
     assert(b.t.length === b.h.length && b.t.length === b.l.length && b.t.length === b.c.length, a + ' ' + tf + ' arrays differ in length');
   }
   const live = await tab(Date.now(), built);
-  for (const a of ['BTC', 'ETH', 'SOL', 'BNB']) {
-    live.d.getElementById('a' + a).click(); await sleep(30);
-    assert.equal(live.d.getElementById('sdTitle').textContent, a + ' RSI Signal Desk'); const t = text(live.d);
-    for (const id of IDS) assert(t[id].length > 10, a + ' ' + id + ' is empty');
-    assert.match(t.links, new RegExp((a === 'BTC' ? 'ETH' : a) + ' RSI\\(7\\)'), a + ': link section should compare ' + (a === 'BTC' ? 'ETH' : a) + ' with BTC');
-  }
+  assert.equal(live.d.getElementById('sdTitle').textContent, 'BTC RSI Signal Desk'); assert.equal(live.d.querySelector('#sd .asset'), null, 'BTC only: no asset switch');
+  const t = text(live.d); for (const id of IDS) assert(t[id].length > 10, 'BTC ' + id + ' is empty');
+  assert.match(t.links, /ETH RSI\(7\)/, 'BTC: the link section compares ETH with BTC'); assert.match(t.p4H, /ETH check:/, 'BTC: ETH check line missing');
   assert.deepEqual(live.errors, []);
-  console.log('built: BTC ETH SOL BNB on 4H and 1D, closed candles only; the tab renders all four with no errors');
+  console.log('built: BTC (+ ETH for the link) on 4H and 1D, closed candles only; the tab renders BTC with no errors');
   console.log('signal-desk: ok');
   process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });
