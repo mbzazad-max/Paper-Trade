@@ -13,7 +13,7 @@
   var when = function (t) { if (!t) return '-'; var d = new Date(t * 1000); return d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
   var kpi = function (lab, val, sub, k) { return '<div><b>' + lab + '</b><span class="' + (k || '') + '">' + val + '</span>' + (sub ? '<div class="note">' + sub + '</div>' : '') + '</div>'; };
   var slug = location.pathname.split('/')[1] || '', API = slug ? '/api/' + slug + '/' : 'api/';
-  var TABS = ['mss', 's083', 'mss-rvol'], tab = TABS.indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'mss';
+  var TABS = ['mss', 's083', 'mss-rvol', 'rsi-desk'], tab = TABS.indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'mss';
   var P = null, S = null, owner = false;
 
   function notYet(start) {
@@ -122,7 +122,8 @@
 
   function render() {
     document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === tab)); });
-    $('main').innerHTML = tab === 'mss-rvol' ? window.MssRvolView.render(window.MssRvolState, owner) : tab === 's083' ? s083() : top20(tab);
+    if (tab === 'rsi-desk') { $('main').innerHTML = window.SignalDeskView.html(); window.SignalDeskView.mount(); }
+    else $('main').innerHTML = tab === 'mss-rvol' ? window.MssRvolView.render(window.MssRvolState, owner) : tab === 's083' ? s083() : top20(tab);
   }
   function say(text, kind) { var b = $('banner'); b.hidden = !text; b.textContent = text || ''; b.style.background = kind === 'ok' ? 'var(--sup-bg)' : ''; b.style.color = kind === 'ok' ? 'var(--sup)' : ''; }
   function nonce() { var a = new Uint8Array(16); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach(function (_, i) { a[i] = Math.random() * 256; }); return Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }

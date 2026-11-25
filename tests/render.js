@@ -25,9 +25,11 @@ function started() {
 
 async function open(files, isOwner) {
   const errors = [], posts = [], vc = new VirtualConsole(); vc.on('jsdomError', (e) => errors.push(String(e.message || e)));
-  const html = fs.readFileSync(path.join(PUB, 'index.html'), 'utf8').replace(/<script src="(cloud|app|mss-rvol-ui)\.js"><\/script>/g, '').replace(/<link[^>]*fonts[^>]*>/g, '');
+  const html = fs.readFileSync(path.join(PUB, 'index.html'), 'utf8').replace(/<script src="(cloud|app|mss-rvol-ui|signal-desk-engine|signal-desk-ui)\.js"><\/script>/g, '').replace(/<link[^>]*fonts[^>]*>/g, '');
   const dom = new JSDOM(html, { url: 'https://dashboards.example/paper-trade/', runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc,
     beforeParse(w) {
+      const noop = () => {}, ctx = new Proxy({}, { get: (o, k) => (k in o ? o[k] : noop), set: (o, k, v) => { o[k] = v; return true; } });
+      w.HTMLCanvasElement.prototype.getContext = () => ctx;   // jsdom has no canvas; the Signal Desk charts draw into this no-op
       w.confirm = () => true; w.alert = (m) => errors.push('alert: ' + m);
       w.fetch = async (u, o) => {
         u = String(u);
@@ -43,7 +45,7 @@ async function open(files, isOwner) {
         return { ok: true, status: 200, json: async () => JSON.parse(fs.readFileSync(f, 'utf8')) };
       };
     } });
-  for (const f of ['cloud.js', 'mss-rvol-ui.js', 'app.js']) { const s = dom.window.document.createElement('script'); s.textContent = fs.readFileSync(path.join(PUB, f), 'utf8'); dom.window.document.body.appendChild(s); }
+  for (const f of ['cloud.js', 'mss-rvol-ui.js', 'signal-desk-engine.js', 'signal-desk-ui.js', 'app.js']) { const s = dom.window.document.createElement('script'); s.textContent = fs.readFileSync(path.join(PUB, f), 'utf8'); dom.window.document.body.appendChild(s); }
   await sleep(300);
   return { d: dom.window.document, errors, posts };
 }
@@ -52,13 +54,16 @@ const tabs = async (d, fn) => { for (const t of ['mss', 's083']) { d.querySelect
 (async () => {
   // 1. the real built files
   let { d, errors } = await open(null, false);
-  assert.deepEqual([...d.querySelectorAll('[data-tab]')].map((b) => b.textContent), ['01 · Top 20 P&L — with MSS', '02 · s083 Participation Regime', '03 · MSS-RVOL']);
+  assert.deepEqual([...d.querySelectorAll('[data-tab]')].map((b) => b.textContent), ['01 · Top 20 P&L — with MSS', '02 · s083 Participation Regime', '03 · MSS-RVOL', '04 · RSI Signal Desk']);
   assert.equal(d.querySelector('h1').textContent, 'Paper-Trade'); assert(d.querySelector('.dash-back'), 'link back to all dashboards missing');
   const real = JSON.parse(fs.readFileSync(path.join(PUB, 'paper.json'), 'utf8'));
   await tabs(d, (t, txt) => { if (!real.started) assert.match(txt, /Not started yet/, t); assert(txt.length > 40, t + ' empty'); });
   assert.equal(d.querySelectorAll('button[data-do]').length, 0);
   d.querySelector('[data-tab="mss-rvol"]').click(); await sleep(20);
   assert.match(d.getElementById('main').textContent, /MSS-RVOL/);
+  d.querySelector('[data-tab="rsi-desk"]').click(); await sleep(300);
+  assert.match(d.getElementById('main').textContent, /BTC RSI Signal Desk/); assert.match(d.getElementById('trades').textContent, /\d/, 'RSI Signal Desk trade history empty');
+  assert.equal(d.querySelectorAll('#sd button[data-do]').length, 0, 'the Signal Desk has no owner buttons');
   assert.deepEqual(errors, []);
   // 2a. started, visitor
   ({ d, errors } = await open(started(), false));
@@ -82,6 +87,6 @@ const tabs = async (d, fn) => { for (const t of ['mss', 's083']) { d.querySelect
   d.querySelector('button[data-do="close"][data-t="s083"]').click(); await sleep(30);
   assert.deepEqual([posts[0].tab, posts[0].sym, posts[0].kind, posts[0].percent, posts[0].journal_count, posts[0].trade_id], ['s083', 'BTC', 'close', 100, 3, 'BTC:S:' + T]);
   assert.deepEqual(errors, []);
-  console.log('render: ok (Coin Zones look; 3 tabs; old tabs unchanged; visitor and owner views; manual actions validated)');
+  console.log('render: ok (Coin Zones look; 4 tabs; old tabs unchanged; visitor and owner views; manual actions validated)');
   process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -106,6 +106,89 @@ details.how summary{cursor:pointer;font-weight:600}
 .chip.sell{border-color:var(--res);color:var(--res)} .chip.book{border-color:var(--sup);color:var(--sup)}
 [hidden]{display:none!important}
 </style>
+<style>
+/* 04 · RSI Signal Desk: the original Signal Desk stylesheet, scoped to #sd and mapped onto the board's colours.
+   The page code reads --accent, --buy, --sell, --band, --emaLine and --f-num from the root for its canvas charts. */
+:root{--accent:var(--acc);--buy:var(--sup);--buy-bg:var(--sup-bg);--sell:var(--res);--sell-bg:var(--res-bg);--wait:var(--warn);--wait-bg:var(--warn-bg);
+  --band:rgba(37,87,214,.10);--emaLine:#b0782a;--f-num:var(--mono);--f-ui:var(--sans)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--band:rgba(123,165,255,.14);--emaLine:#e0a65a}}
+:root[data-theme="dark"]{--band:rgba(123,165,255,.14);--emaLine:#e0a65a}
+#sd{display:grid;gap:18px;font-size:14.5px;line-height:1.45}
+#sd .sd-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+#sd .sd-head h2{font-size:18px;margin:0}
+#sd .status{font-size:12.5px;color:var(--muted);text-align:right;max-width:340px}
+#sd button{font:inherit;cursor:pointer;border-radius:8px}
+#sd .rules{display:flex;flex-wrap:wrap;gap:8px;font-size:12.5px;color:var(--muted)}
+#sd .rules span{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+#sd .panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+#sd .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:14px;min-width:0}
+#sd .ph{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#sd .tf{font-weight:700;font-size:15.5px}
+#sd .tf small{font-weight:500;color:var(--muted);font-size:12px;margin-left:6px}
+#sd .sd-pill{font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px;white-space:nowrap}
+#sd .p-buy{background:var(--buy-bg);color:var(--buy)} #sd .p-sell{background:var(--sell-bg);color:var(--sell)}
+#sd .p-hold{background:var(--buy-bg);color:var(--buy);border:1px dashed var(--buy)} #sd .p-wait{background:var(--wait-bg);color:var(--wait)}
+#sd .headline{font-size:14px}
+#sd .gauge{position:relative;height:30px}
+#sd .g-track{position:absolute;left:0;right:0;top:10px;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--buy-bg) 0 30%,var(--soft) 30% 70%,var(--sell-bg) 70% 100%);border:1px solid var(--line)}
+#sd .g-mark{position:absolute;top:4px;width:3px;height:22px;background:var(--ink);border-radius:2px;transform:translateX(-50%)}
+#sd .g-lab{position:absolute;top:22px;font-size:10.5px;color:var(--muted);transform:translateX(-50%)}
+#sd .sd-kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin:0}
+#sd .sd-kv div{display:flex;flex-direction:column;min-width:0}
+#sd .sd-kv dt{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+#sd .sd-kv dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:14px}
+#sd canvas{width:100%;height:150px;display:block}
+#sd .need{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+#sd .ledger,#sd .cycles,#sd .link{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:14px;min-width:0}
+#sd .lh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+#sd h2{font-size:16px;margin:0}
+#sd .sd-tabs{display:flex;gap:4px;background:var(--soft);padding:3px;border-radius:9px;border:1px solid var(--line)}
+#sd .sd-tabs button{border:0;background:transparent;color:var(--muted);padding:6px 14px;font-weight:600}
+#sd .sd-tabs button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#sd .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+#sd .stat{background:var(--soft);border-radius:8px;padding:10px 12px}
+#sd .stat b{display:block;font-family:var(--mono);font-size:16px;font-variant-numeric:tabular-nums}
+#sd .stat span{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+#sd .tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+#sd table{border-collapse:collapse;width:100%;font-size:12.5px}
+#sd th,#sd td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line);vertical-align:middle}
+#sd th{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;background:var(--soft);position:sticky;top:0}
+#sd th:first-child,#sd td:first-child{text-align:left}
+#sd td{font-family:var(--mono);font-variant-numeric:tabular-nums}
+#sd tr:last-child td{border-bottom:0}
+#sd .pos{color:var(--buy)} #sd .neg{color:var(--sell)}
+#sd .openrow td{background:var(--wait-bg)}
+#sd .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:16px}
+@media (max-width:760px){#sd .cols{grid-template-columns:minmax(0,1fr)}}
+#sd .cols h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 8px}
+#sd .sd-scroll{max-height:420px;overflow:auto}
+#sd .foot{font-size:12px;color:var(--muted)}
+#sd .cyc-intro{font-size:12.5px;color:var(--muted);margin:4px 0 0;max-width:72ch}
+#sd .cgrid,#sd .lgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+#sd .cyc,#sd .lk{border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px;min-width:0;align-content:start}
+#sd .cyc .lead{font-size:13px}
+#sd .wl{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:-4px}
+#sd .win,#sd .duo{display:grid;gap:6px}
+#sd .win{grid-template-columns:repeat(3,minmax(0,1fr))} #sd .duo{grid-template-columns:repeat(2,minmax(0,1fr))}
+#sd .win div,#sd .duo div{background:var(--soft);border-radius:8px;padding:8px;min-width:0}
+#sd .win .mid{box-shadow:inset 0 0 0 1.5px var(--accent)}
+#sd .win span,#sd .duo span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+#sd .win b{display:block;font-size:12.5px;font-weight:600;line-height:1.25}
+#sd .duo b{display:block;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:15px}
+#sd .win i,#sd .duo i{display:block;font-style:normal;font-size:11px;color:var(--muted);margin-top:2px}
+#sd .win i{font-family:var(--mono)}
+#sd .odds{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--muted)}
+#sd .odds span{border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+#sd .odds b{font-family:var(--mono);color:var(--ink)}
+#sd .trig{font-size:12.5px;border-left:3px solid var(--accent);padding-left:10px}
+#sd .cyc canvas{height:90px} #sd .lk canvas{height:70px}
+#sd .cyc .meta,#sd .lk .meta{font-size:12px;color:var(--muted)}
+#sd .asset{display:flex;gap:4px;background:var(--soft);padding:3px;border-radius:9px;border:1px solid var(--line)}
+#sd .asset button{border:0;background:transparent;color:var(--muted);padding:6px 14px;font-weight:700;letter-spacing:.02em}
+#sd .asset button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#sd .htop{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#sd .lk table{font-size:12px} #sd .lk th,#sd .lk td{padding:6px 8px}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -121,6 +204,7 @@ details.how summary{cursor:pointer;font-weight:600}
     <button type="button" role="tab" data-tab="mss" aria-selected="true">01 · Top 20 P&amp;L — with MSS</button>
     <button type="button" role="tab" data-tab="s083" aria-selected="false">02 · s083 Participation Regime</button>
     <button type="button" role="tab" data-tab="mss-rvol" aria-selected="false">03 · MSS-RVOL</button>
+    <button type="button" role="tab" data-tab="rsi-desk" aria-selected="false">04 · RSI Signal Desk</button>
   </div>
   <main id="main" aria-live="polite"><div class="card"><p class="note">Loading...</p></div></main>
   <details class="how">
@@ -129,12 +213,15 @@ details.how summary{cursor:pointer;font-weight:600}
     <p class="note"><b>Same rules as Coin Zones.</b> Tab 01 replays the board's own spot-setup advice with the board's own paper-test rules, buying only when a 4H market structure shift up comes from the buy zone. Tab 02 is the s083 rule from the board's Strategy test. Everything uses closed 4H candles from the shared Market-Data store and is rebuilt when new candles arrive, once a day, or when you press Refresh.</p>
     <p class="note"><b>Your buttons (owner only).</b> <b>Close all</b> sells what is left of a position. <b>Book %</b> sells that share of what is left and needs it to be in profit after fees. Both fill at the close of the last closed 4H candle, never at a live price, and change only that tab. Each request is checked again by the build; if a new candle has closed or the position changed, it is refused and nothing happens.</p>
     <p class="note"><b>MSS-RVOL:</b> Separate five-coin paper test. Native closed 4H, 2H/3H derived from saved closed 1H, volume-confirmed entries and structure exits, protective ATR stop, separate persistent ledger and owner-only manual actions. No historic positions are imported.</p>
+    <p class="note"><b>RSI Signal Desk:</b> buy and sell signals only (no paper account). BTC, ETH, SOL and BNB on 4H and 1D with the original Signal Desk rules and engine, from closed Binance candles in Market-Data. Its trade history is a backtest over the loaded candles.</p>
     <p class="note">Paper results, not financial advice.</p>
   </details>
   <footer id="foot"></footer>
 </div>
 <script src="cloud.js"></script>
 <script src="mss-rvol-ui.js"></script>
+<script src="signal-desk-engine.js"></script>
+<script src="signal-desk-ui.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

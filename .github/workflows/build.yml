@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Coin Zones engine and build files must be byte-identical to the originals
+      - name: Coin Zones and Signal Desk engine files must be byte-identical to the originals
         run: sha256sum -c --quiet reference/SOURCE_SHA256SUMS
       - name: Check secrets
         env:
@@ -69,6 +69,14 @@ jobs:
       - name: MSS-RVOL warning
         if: ${{ steps.mssrvol.outcome == 'failure' }}
         run: echo "::warning::MSS-RVOL did not update this run; other tabs saved. Its page keeps the last good build until the next successful run."
+      - name: RSI Signal Desk candles (BTC ETH SOL BNB, 4H and 1D; the original engine runs in the page)
+        id: signaldesk
+        # Like MSS-RVOL: a failure here must not stop the other tabs from saving; signal-desk.js writes nothing on failure.
+        continue-on-error: true
+        run: node build/signal-desk.js md
+      - name: RSI Signal Desk warning
+        if: ${{ steps.signaldesk.outcome == 'failure' }}
+        run: echo "::warning::RSI Signal Desk did not update this run; other tabs saved. It keeps the last good candles until the next successful run."
       - name: Tests
         run: |
           node tests/mss-rvol.js
@@ -76,6 +84,7 @@ jobs:
           node tests/parity-ledgers.js md
           npm install --no-save --ignore-scripts --no-audit --no-fund jsdom@26 > /dev/null
           node tests/render.js jsdom
+          node tests/signal-desk.js md jsdom
           node tests/parity.js md jsdom > parity.json || { cat parity.json; exit 1; }
           node tests/fresh-start.js md
       - name: Save (one commit)
@@ -84,6 +93,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add config/start.json public/data.json public/freshness.json public/paper.json public/s083-paper.json state
           git add public/mss-rvol.json
+          [ -f public/signal-desk.json ] && git add public/signal-desk.json
           [ -f public/pnl.json ] && git add public/pnl.json
           [ -f public/structure.json ] && git add public/structure.json
           if git diff --cached --quiet; then echo "Nothing changed."; exit 0; fi
