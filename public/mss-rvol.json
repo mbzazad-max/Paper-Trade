@@ -1,7 +1,7 @@
 {
   "version": 1,
   "started": true,
-  "generated": "2026-11-26T12:06:46.000Z",
+  "generated": "2026-11-26T13:12:56.000Z",
   "source": "mbzazad-max/market-data",
   "method": "9-way confirmed Swing-7; native 4H + 2H/3H aggregated from 1H",
   "entry_rvol": 2,
