@@ -11,11 +11,11 @@
       "realized": 0,
       "peak": 2000,
       "dd": 0,
-      "last_hour": 1795780800,
+      "last_hour": 1795784400,
       "manualBlock": false,
       "last_close": 1795780800,
-      "price": 1725.07,
-      "updated": 1795784400
+      "price": 1724.43,
+      "updated": 1795788000
     },
     "SOL": {
       "cash": 2000,
@@ -25,11 +25,11 @@
       "realized": 0,
       "peak": 2000,
       "dd": 0,
-      "last_hour": 1795780800,
+      "last_hour": 1795784400,
       "manualBlock": false,
       "last_close": 1795780800,
-      "price": 73.18,
-      "updated": 1795784400
+      "price": 73.39,
+      "updated": 1795788000
     },
     "ENA": {
       "cash": 2000,
@@ -39,11 +39,11 @@
       "realized": 0,
       "peak": 2000,
       "dd": 0,
-      "last_hour": 1795780800,
+      "last_hour": 1795784400,
       "manualBlock": false,
       "last_close": 1795780800,
-      "price": 0.1072,
-      "updated": 1795784400
+      "price": 0.1066,
+      "updated": 1795788000
     },
     "DOGE": {
       "cash": 2000,
@@ -53,11 +53,11 @@
       "realized": 0,
       "peak": 2000,
       "dd": 0,
-      "last_hour": 1795780800,
+      "last_hour": 1795784400,
       "manualBlock": false,
       "last_close": 1795780800,
-      "price": 0.05867,
-      "updated": 1795784400
+      "price": 0.05901,
+      "updated": 1795788000
     },
     "ZEC": {
       "cash": 2000,
@@ -67,11 +67,11 @@
       "realized": 0,
       "peak": 2000,
       "dd": 0,
-      "last_hour": 1795780800,
+      "last_hour": 1795784400,
       "manualBlock": false,
       "last_close": 1795780800,
-      "price": 762.11,
-      "updated": 1795784400
+      "price": 756.2,
+      "updated": 1795788000
     }
   }
 }
