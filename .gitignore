@@ -2,3 +2,4 @@ node_modules/
 history/
 *.tmp
 parity.json
+!cycle/history/
