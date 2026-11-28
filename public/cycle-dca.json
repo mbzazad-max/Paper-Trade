@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-28 09:34",
+ "generated": "2026-11-28 09:49",
  "start": 1795910400,
  "started": false,
  "journal_count": 0,
@@ -21,6 +21,8 @@
  "coins": [
   {
    "sym": "BTC",
+   "market": "BTCUSDT",
+   "tf": "4H",
    "qty": 0,
    "avg": null,
    "cost": 0,
@@ -93,6 +95,8 @@
   },
   {
    "sym": "ETH",
+   "market": "ETHUSDT",
+   "tf": "4H",
    "qty": 0,
    "avg": null,
    "cost": 0,
@@ -165,6 +169,8 @@
   },
   {
    "sym": "SOL",
+   "market": "SOLUSDT",
+   "tf": "4H",
    "qty": 0,
    "avg": null,
    "cost": 0,
@@ -237,6 +243,8 @@
   },
   {
    "sym": "BNB",
+   "market": "BNBUSDT",
+   "tf": "4H",
    "qty": 0,
    "avg": null,
    "cost": 0,
@@ -309,6 +317,8 @@
   },
   {
    "sym": "XRP",
+   "market": "XRPUSDT",
+   "tf": "4H",
    "qty": 0,
    "avg": null,
    "cost": 0,
@@ -381,6 +391,8 @@
   },
   {
    "sym": "DOGE",
+   "market": "DOGEUSDT",
+   "tf": "4H",
    "qty": 0,
    "avg": null,
    "cost": 0,
@@ -453,6 +465,8 @@
   },
   {
    "sym": "LINK",
+   "market": "LINKUSDT",
+   "tf": "4H",
    "qty": 0,
    "avg": null,
    "cost": 0,
@@ -525,6 +539,8 @@
   },
   {
    "sym": "XLM",
+   "market": "XLMUSDT",
+   "tf": "4H",
    "qty": 0,
    "avg": null,
    "cost": 0,
@@ -597,6 +613,8 @@
   },
   {
    "sym": "ARB",
+   "market": "ARBUSDT",
+   "tf": "4H",
    "qty": 0,
    "avg": null,
    "cost": 0,
@@ -666,9 +684,133 @@
    "fired": 0,
    "low_buys": [],
    "episode": "ARB|2026-11-24"
+  },
+  {
+   "sym": "GOLD",
+   "market": "Gold (TVC:GOLD)",
+   "tf": "1D",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 3653.55,
+   "last_close": 1795651200,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-20",
+    "v": 3537.83
+   },
+   "expired": false,
+   "status": "Bear",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": null,
+     "level": null
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": null,
+     "level": null
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": "2026-11-26",
+     "level": 3636.73
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": null,
+     "level": 3690.5
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the highest close of the 5 sessions before the low",
+     "fired": null,
+     "level": 3883.94
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 3845.52
+    }
+   ],
+   "fired": 1,
+   "low_buys": [],
+   "episode": "GOLD|2026-11-20"
+  },
+  {
+   "sym": "SILVER",
+   "market": "Silver (TVC:SILVER)",
+   "tf": "1D",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 43.7308,
+   "last_close": 1795651200,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-24",
+    "v": 40.91
+   },
+   "expired": false,
+   "status": "Bear",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": null,
+     "level": null
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": null,
+     "level": null
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": null,
+     "level": 44.02
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": null,
+     "level": 44.13
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the highest close of the 5 sessions before the low",
+     "fired": null,
+     "level": 47.37
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 47.67
+    }
+   ],
+   "fired": 0,
+   "low_buys": [],
+   "episode": "SILVER|2026-11-24"
   }
  ],
  "trades": [],
  "skipped": [],
- "source": "Signs: the BTC & ETH dashboard cycle engine (byte-identical copy) on Market-Data daily closes. Prices: Market-Data Binance <COIN>USDT 4H (last closed candle)."
+ "source": "Signs: the BTC & ETH dashboard cycle engine (byte-identical copy) on Market-Data daily closes; gold and silver: the Metal Cycle page engine (byte-identical copy) on Market-Data TVC:GOLD / TVC:SILVER daily. Prices: Market-Data Binance <COIN>USDT 4H, gold/silver daily (last closed candle)."
 }
