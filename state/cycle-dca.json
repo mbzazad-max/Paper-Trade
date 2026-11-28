@@ -1,0 +1,6 @@
+{
+ "version": 1,
+ "about": "Cycle DCA buys (build/cycle-dca.js), append-only. start = first day whose signs count.",
+ "start": 1795910400,
+ "buys": []
+}

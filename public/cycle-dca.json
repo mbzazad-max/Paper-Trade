@@ -1,0 +1,674 @@
+{
+ "generated": "2026-11-28 07:17",
+ "start": 1795910400,
+ "started": false,
+ "journal_count": 0,
+ "capital": 100000,
+ "size": 5000,
+ "fee_pct": 0.1,
+ "entry1_signs": 2,
+ "entry2_ids": [
+  "rev",
+  "d10",
+  "d20",
+  "swing"
+ ],
+ "cash": 100000,
+ "value": 0,
+ "equity": 100000,
+ "pnl": 0,
+ "return_pct": 0,
+ "coins": [
+  {
+   "sym": "BTC",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 60029.2,
+   "last_close": 1795824000,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-20",
+    "v": 58951.51
+   },
+   "expired": false,
+   "status": "No early signs: BTC still falling",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": null,
+     "level": null,
+     "moved": 83,
+     "n": 58
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": null,
+     "level": 60755.453,
+     "moved": 92,
+     "n": 26
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": null,
+     "level": 62639.52,
+     "moved": 83,
+     "n": 82
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": null,
+     "level": 60755.453,
+     "moved": 76,
+     "n": 88
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the 7-day high before it",
+     "fired": null,
+     "level": 68314,
+     "moved": 95,
+     "n": 42
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 65210.428,
+     "moved": 92,
+     "n": 64
+    }
+   ],
+   "fired": 0,
+   "low_buys": [],
+   "episode": "BTC|2026-11-20"
+  },
+  {
+   "sym": "ETH",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 1665.99,
+   "last_close": 1795824000,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-20",
+    "v": 1623.09
+   },
+   "expired": false,
+   "status": "No early signs: ETH still falling",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": null,
+     "level": null,
+     "moved": 70,
+     "n": 67
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": null,
+     "level": 1700.33,
+     "moved": 89,
+     "n": 18
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": null,
+     "level": 1770.55,
+     "moved": 84,
+     "n": 79
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": null,
+     "level": 1700.33,
+     "moved": 83,
+     "n": 82
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the 7-day high before it",
+     "fired": null,
+     "level": 1929.88,
+     "moved": 97,
+     "n": 35
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 1828.7645,
+     "moved": 90,
+     "n": 63
+    }
+   ],
+   "fired": 0,
+   "low_buys": [],
+   "episode": "ETH|2026-11-20"
+  },
+  {
+   "sym": "SOL",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 71.72,
+   "last_close": 1795824000,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-20",
+    "v": 68.88
+   },
+   "expired": false,
+   "status": "Divergence + close above the 10D (SOL bounce likely)",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": "2026-11-20",
+     "level": null,
+     "moved": 85,
+     "n": 54
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": "2026-11-23",
+     "level": 71.159,
+     "moved": 100,
+     "n": 16
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": null,
+     "level": 73.56,
+     "moved": 96,
+     "n": 55
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": "2026-11-23",
+     "level": 71.159,
+     "moved": 94,
+     "n": 52
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the 7-day high before it",
+     "fired": null,
+     "level": 78.19,
+     "moved": 97,
+     "n": 29
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 75.0615,
+     "moved": 100,
+     "n": 38
+    }
+   ],
+   "fired": 3,
+   "low_buys": [],
+   "episode": "SOL|2026-11-20"
+  },
+  {
+   "sym": "BNB",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 555.36,
+   "last_close": 1795824000,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-20",
+    "v": 540.84
+   },
+   "expired": false,
+   "status": "No early signs: BNB still falling",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": null,
+     "level": null,
+     "moved": 82,
+     "n": 45
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": null,
+     "level": 558.023,
+     "moved": 95,
+     "n": 20
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": null,
+     "level": 582.71,
+     "moved": 82,
+     "n": 66
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": null,
+     "level": 558.023,
+     "moved": 82,
+     "n": 62
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the 7-day high before it",
+     "fired": null,
+     "level": 630.31,
+     "moved": 91,
+     "n": 33
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 598.5945,
+     "moved": 88,
+     "n": 50
+    }
+   ],
+   "fired": 0,
+   "low_buys": [],
+   "episode": "BNB|2026-11-20"
+  },
+  {
+   "sym": "XRP",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 0.9502,
+   "last_close": 1795824000,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-20",
+    "v": 0.9107
+   },
+   "expired": false,
+   "status": "Divergence + close above the 10D (XRP bounce likely)",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": "2026-11-20",
+     "level": null,
+     "moved": 89,
+     "n": 112
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": "2026-11-26",
+     "level": 0.93963,
+     "moved": 100,
+     "n": 35
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": null,
+     "level": 0.9732,
+     "moved": 90,
+     "n": 111
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": "2026-11-26",
+     "level": 0.93963,
+     "moved": 93,
+     "n": 101
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the 7-day high before it",
+     "fired": null,
+     "level": 1.011,
+     "moved": 100,
+     "n": 54
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 0.97986,
+     "moved": 95,
+     "n": 80
+    }
+   ],
+   "fired": 3,
+   "low_buys": [],
+   "episode": "XRP|2026-11-20"
+  },
+  {
+   "sym": "DOGE",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 0.05772,
+   "last_close": 1795824000,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-20",
+    "v": 0.05439
+   },
+   "expired": false,
+   "status": "Divergence + close above the 10D (DOGE bounce likely)",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": "2026-11-20",
+     "level": null,
+     "moved": 82,
+     "n": 66
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": "2026-11-27",
+     "level": 0.056407,
+     "moved": 95,
+     "n": 22
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": null,
+     "level": 0.05849,
+     "moved": 84,
+     "n": 70
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": "2026-11-27",
+     "level": 0.056407,
+     "moved": 88,
+     "n": 69
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the 7-day high before it",
+     "fired": null,
+     "level": 0.06454,
+     "moved": 97,
+     "n": 31
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 0.0603005,
+     "moved": 96,
+     "n": 45
+    }
+   ],
+   "fired": 3,
+   "low_buys": [],
+   "episode": "DOGE|2026-11-20"
+  },
+  {
+   "sym": "LINK",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 9.239,
+   "last_close": 1795824000,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-20",
+    "v": 8.545
+   },
+   "expired": false,
+   "status": "Early warning: LINK turning up (bounce possible; many of these fail)",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": null,
+     "level": null,
+     "moved": 81,
+     "n": 42
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": null,
+     "level": 8.9643,
+     "moved": 100,
+     "n": 18
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": "2026-11-26",
+     "level": 9.08,
+     "moved": 94,
+     "n": 66
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": "2026-11-23",
+     "level": 8.9643,
+     "moved": 94,
+     "n": 66
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the 7-day high before it",
+     "fired": null,
+     "level": 9.858,
+     "moved": 100,
+     "n": 32
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 9.3931,
+     "moved": 98,
+     "n": 53
+    }
+   ],
+   "fired": 2,
+   "low_buys": [],
+   "episode": "LINK|2026-11-20"
+  },
+  {
+   "sym": "XLM",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 0.1261,
+   "last_close": 1795824000,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-24",
+    "v": 0.1243
+   },
+   "expired": false,
+   "status": "No early signs: XLM still falling",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": null,
+     "level": null,
+     "moved": 76,
+     "n": 58
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": null,
+     "level": 0.12911,
+     "moved": 94,
+     "n": 17
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": null,
+     "level": 0.1324,
+     "moved": 90,
+     "n": 88
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": null,
+     "level": 0.12911,
+     "moved": 89,
+     "n": 83
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the 7-day high before it",
+     "fired": null,
+     "level": 0.1416,
+     "moved": 93,
+     "n": 41
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 0.136405,
+     "moved": 96,
+     "n": 53
+    }
+   ],
+   "fired": 0,
+   "low_buys": [],
+   "episode": "XLM|2026-11-24"
+  },
+  {
+   "sym": "ARB",
+   "qty": 0,
+   "avg": null,
+   "cost": 0,
+   "price": 0.1136,
+   "last_close": 1795824000,
+   "value": 0,
+   "unrealized": 0,
+   "realized": 0,
+   "buys": 0,
+   "sells": 0,
+   "low": {
+    "day": "2026-11-24",
+    "v": 0.1104
+   },
+   "expired": false,
+   "status": "No early signs: ARB still falling",
+   "signs": [
+    {
+     "id": "div",
+     "label": "RSI divergence at the low (setup)",
+     "fired": null,
+     "level": null,
+     "moved": 57,
+     "n": 49
+    },
+    {
+     "id": "div10",
+     "label": "Divergence, then a close above the 10D",
+     "fired": null,
+     "level": 0.11568,
+     "moved": 91,
+     "n": 11
+    },
+    {
+     "id": "rev",
+     "label": "Key reversal: close above the low day's high",
+     "fired": null,
+     "level": 0.118,
+     "moved": 83,
+     "n": 35
+    },
+    {
+     "id": "d10",
+     "label": "Daily close above the 10D",
+     "fired": null,
+     "level": 0.11568,
+     "moved": 89,
+     "n": 35
+    },
+    {
+     "id": "swing",
+     "label": "Swing break: close above the 7-day high before it",
+     "fired": null,
+     "level": 0.1336,
+     "moved": 100,
+     "n": 15
+    },
+    {
+     "id": "d20",
+     "label": "Daily close above the 20D",
+     "fired": null,
+     "level": 0.13171,
+     "moved": 88,
+     "n": 25
+    }
+   ],
+   "fired": 0,
+   "low_buys": [],
+   "episode": "ARB|2026-11-24"
+  }
+ ],
+ "trades": [],
+ "skipped": [],
+ "source": "Signs: the BTC & ETH dashboard cycle engine (byte-identical copy) on Market-Data daily closes. Prices: Market-Data Binance <COIN>USDT 4H (last closed candle)."
+}
