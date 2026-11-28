@@ -205,6 +205,7 @@ details.how summary{cursor:pointer;font-weight:600}
     <button type="button" role="tab" data-tab="s083" aria-selected="false">02 · s083 Participation Regime</button>
     <button type="button" role="tab" data-tab="mss-rvol" aria-selected="false">03 · MSS-RVOL</button>
     <button type="button" role="tab" data-tab="rsi-desk" aria-selected="false">04 · RSI Signal Desk</button>
+    <button type="button" role="tab" data-tab="cycle-dca" aria-selected="false">05 · Cycle DCA</button>
   </div>
   <main id="main" aria-live="polite"><div class="card"><p class="note">Loading...</p></div></main>
   <details class="how">
@@ -214,6 +215,7 @@ details.how summary{cursor:pointer;font-weight:600}
     <p class="note"><b>Your buttons (owner only).</b> <b>Close all</b> sells what is left of a position. <b>Book %</b> sells that share of what is left and needs it to be in profit after fees. Both fill at the close of the last closed 4H candle, never at a live price, and change only that tab. Each request is checked again by the build; if a new candle has closed or the position changed, it is refused and nothing happens.</p>
     <p class="note"><b>MSS-RVOL:</b> Separate five-coin paper test. Native closed 4H, 2H/3H derived from saved closed 1H, volume-confirmed entries and structure exits, protective ATR stop, separate persistent ledger and owner-only manual actions. No historic positions are imported.</p>
     <p class="note"><b>RSI Signal Desk:</b> buy and sell signals only (no paper account). BTC on 4H and 1D with the original Signal Desk rules and engine, from closed Binance candles in Market-Data. Its trade history is a backtest over the loaded candles.</p>
+    <p class="note"><b>Cycle DCA:</b> spot account for BTC, ETH, SOL, BNB, XRP, DOGE, LINK, XLM and ARB. The build buys from the BTC &amp; ETH dashboard's cycle-tab early bottom signs ($5,000 when 2 of the 6 have fired after a 30-day low, another $5,000 when all 4 price-action signs have fired); you sell with Sell % or Close all, at the last closed 4H close. Fresh start, nothing carried over.</p>
     <p class="note">Paper results, not financial advice.</p>
   </details>
   <footer id="foot"></footer>
@@ -222,6 +224,7 @@ details.how summary{cursor:pointer;font-weight:600}
 <script src="mss-rvol-ui.js"></script>
 <script src="signal-desk-engine.js"></script>
 <script src="signal-desk-ui.js"></script>
+<script src="cycle-dca-ui.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

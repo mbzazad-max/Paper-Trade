@@ -17,6 +17,7 @@ function main() {
   const raw = process.env.PAPER_ACTION || ''; if (!raw || raw.length > 1024) no('empty or too long');
   const p = JSON.parse(raw);
   if (p.tab === 'mss-rvol') return require('./mss-rvol.js').recordManualAction(md, p);
+  if (p.tab === 'cycle-dca') return require('./cycle-dca.js').recordManualAction(md, p);   // 05 · Cycle DCA (sells only; no profit rule)
   if (!['mss', 's083'].includes(p.tab) || !['close', 'book'].includes(p.kind) || !/^[A-Za-z0-9]{16,64}$/.test(p.nonce || '')
     || typeof p.trade_id !== 'string' || !Number.isInteger(p.journal_count) || !Number.isInteger(p.last_close)) no('malformed request');
   if (p.kind === 'book' && !(Number.isInteger(p.percent) && p.percent >= 1 && p.percent <= 99)) no('Book % must be a whole number from 1 to 99');

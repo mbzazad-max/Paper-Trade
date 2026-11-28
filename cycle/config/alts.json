@@ -1,0 +1,128 @@
+{
+ "_about": "Alts page (owner, 27 Nov 2026): the BTC cycle analysis (build/usdtd.js --asset=<coin>) for 7 alts, each from its own Market-Data Binance daily candles (XRP: the stored Bitstamp XRPUSD history before Binance starts, like ETH's Kraken history). Cycle dates are each coin's own highest / lowest daily CLOSES (checked against Market-Data on 27 Nov 2026). regimes: id (one of bull17 bear18 rally19 drop20 bull21 bear22 bull23 bear26, used for the turning-points list), name, kind (bull/bear), from, to (null = runs to today). cy: t1/b1 = an earlier full bear (top/bottom), t2/b2 = the last full bear, t3 = the latest top; null where the coin has no such bear in its data. pasts_labels: names for the two past bears in 'Past bears vs now'. Wording (vsBtc, behave, dates, hist) is shown on the page as written here.",
+ "order": ["XRP", "DOGE", "LINK", "UNI", "ARB", "XLM", "TRX"],
+ "coins": {
+  "XRP": {
+   "name": "XRP", "an": "an", "series": "binance/XRPUSDT/1D", "before": "tv/BITSTAMP_XRPUSD/1D",
+   "regimes": [
+    { "id": "bull17", "name": "Bull 2014–18", "kind": "bull", "from": "2014-07-06", "to": "2018-01-07" },
+    { "id": "bear18", "name": "Bear 2018–20", "kind": "bear", "from": "2018-01-07", "to": "2020-03-12" },
+    { "id": "bull21", "name": "Bull 2020–21", "kind": "bull", "from": "2020-03-12", "to": "2021-04-14" },
+    { "id": "bear22", "name": "Bear 2021–22", "kind": "bear", "from": "2021-04-14", "to": "2022-06-18" },
+    { "id": "bull23", "name": "Bull 2022–25", "kind": "bull", "from": "2022-06-18", "to": "2025-07-22" },
+    { "id": "bear26", "name": "Bear 2025–26 (so far)", "kind": "bear", "from": "2025-07-22", "to": null }
+   ],
+   "cy": { "t1": "2018-01-07", "t1l": "Jan 2018", "b1": "2020-03-12", "t2": "2021-04-14", "t2l": "Apr 2021", "b2": "2022-06-18", "b2l": "Jun 2022", "t3": "2025-07-22", "t3l": "Jul 2025" },
+   "pasts_labels": ["2018–20", "2021–22"],
+   "since": "Sep 2015", "sinceY": "2015", "readSince": "Jun 2015", "chart": ["2015-01-01", "Since 2015"],
+   "sig": "Since the 100W first exists (Jun 2015) and the 200W (May 2017).",
+   "vsBtc": "XRP's bear after the Jan 2018 top ran until Mar 2020 (BTC bottomed in Dec 2018), its 2021 top came in April (BTC: Nov 2021), its 2022 low in June (BTC: Nov 2022) and its last top in Jul 2025 (BTC: Oct 2025).",
+   "behave": "XRP's bulls and bears are dated from XRP's own tops and bottoms: its 2018 bear lasted until the Mar 2020 crash, and its 2022–25 bull was mostly flat until late 2024.",
+   "dates": "low 6 Jul 2014, top 7 Jan 2018, bottom 12 Mar 2020, top 14 Apr 2021, bottom 18 Jun 2022, top 22 Jul 2025",
+   "hist": "XRP history starts 4 Aug 2013 (Bitstamp XRPUSD, stored once in Market-Data; Binance XRPUSDT from 4 May 2018); the 100W exists from Jun 2015 and the 200W from May 2017. Before 2017 XRP traded under 1 cent."
+  },
+  "DOGE": {
+   "name": "DOGE", "an": "a", "series": "binance/DOGEUSDT/1D",
+   "regimes": [
+    { "id": "drop20", "name": "Drop 2019–20", "kind": "bear", "from": "2019-07-05", "to": "2020-03-16" },
+    { "id": "bull21", "name": "Bull 2020–21", "kind": "bull", "from": "2020-03-16", "to": "2021-05-07" },
+    { "id": "bear22", "name": "Bear 2021–22", "kind": "bear", "from": "2021-05-07", "to": "2022-06-18" },
+    { "id": "bull23", "name": "Bull 2022–24", "kind": "bull", "from": "2022-06-18", "to": "2024-12-08" },
+    { "id": "bear26", "name": "Bear 2025–26 (so far)", "kind": "bear", "from": "2024-12-08", "to": null }
+   ],
+   "cy": { "t1": null, "t1l": "", "b1": null, "t2": "2021-05-07", "t2l": "May 2021", "b2": "2022-06-18", "b2l": "Jun 2022", "t3": "2024-12-08", "t3l": "Dec 2024" },
+   "pasts_labels": ["", "2021–22"],
+   "since": "Jul 2019", "sinceY": "2019", "readSince": "May 2021", "chart": ["2019-07-01", "All (from Jul 2019)"],
+   "sig": "Since the 100W first exists (May 2021) and the 200W (Apr 2023).",
+   "vsBtc": "DOGE and BTC turn months apart (DOGE topped in May 2021 and Dec 2024, BTC in Nov 2021 and Oct 2025; DOGE bottomed in Jun 2022, BTC in Nov 2022).",
+   "behave": "DOGE's bulls and bears are dated from DOGE's own tops and bottoms (its 2021 top in May, six months before BTC's, its 2022 low in June and its last top in Dec 2024, ten months before BTC's). DOGE trades on Binance from Jul 2019, so there is one past bear to compare (2021–22).",
+   "dates": "low 16 Mar 2020, top 7 May 2021, bottom 18 Jun 2022, top 8 Dec 2024",
+   "hist": "DOGE history starts 5 Jul 2019 (Binance DOGEUSDT); the 100W exists from May 2021 and the 200W from Apr 2023, so the weekly read starts in May 2021."
+  },
+  "LINK": {
+   "name": "LINK", "an": "a", "series": "binance/LINKUSDT/1D",
+   "regimes": [
+    { "id": "bull21", "name": "Bull 2019–21", "kind": "bull", "from": "2019-01-31", "to": "2021-05-09" },
+    { "id": "bear22", "name": "Bear 2021–23", "kind": "bear", "from": "2021-05-09", "to": "2023-06-19" },
+    { "id": "bull23", "name": "Bull 2023–24", "kind": "bull", "from": "2023-06-19", "to": "2024-12-15" },
+    { "id": "bear26", "name": "Bear 2025–26 (so far)", "kind": "bear", "from": "2024-12-15", "to": null }
+   ],
+   "cy": { "t1": null, "t1l": "", "b1": null, "t2": "2021-05-09", "t2l": "May 2021", "b2": "2023-06-19", "b2l": "Jun 2023", "t3": "2024-12-15", "t3l": "Dec 2024" },
+   "pasts_labels": ["", "2021–23"],
+   "since": "Jan 2019", "sinceY": "2019", "readSince": "Dec 2020", "chart": ["2019-01-01", "All (from Jan 2019)"],
+   "sig": "Since the 100W first exists (Dec 2020) and the 200W (Nov 2022).",
+   "vsBtc": "LINK and BTC turn months apart (LINK topped in May 2021 and Dec 2024, BTC in Nov 2021 and Oct 2025; LINK's bear low came in Jun 2023, seven months after BTC's).",
+   "behave": "LINK's bulls and bears are dated from LINK's own tops and bottoms (its 2021 top in May, its bear low in Jun 2023, long after BTC's Nov 2022 low, and its last top in Dec 2024). LINK trades on Binance from Jan 2019, so there is one past bear to compare (2021–23).",
+   "dates": "low 31 Jan 2019, top 9 May 2021, bottom 19 Jun 2023, top 15 Dec 2024",
+   "hist": "LINK history starts 16 Jan 2019 (Binance LINKUSDT); the 100W exists from Dec 2020 and the 200W from Nov 2022, so the weekly read starts in Dec 2020."
+  },
+  "UNI": {
+   "name": "UNI", "an": "a", "series": "binance/UNIUSDT/1D",
+   "regimes": [
+    { "id": "bull21", "name": "Bull 2020–21", "kind": "bull", "from": "2020-11-04", "to": "2021-05-04" },
+    { "id": "bear22", "name": "Bear 2021–22", "kind": "bear", "from": "2021-05-04", "to": "2022-06-18" },
+    { "id": "bull23", "name": "Bull 2022–24", "kind": "bull", "from": "2022-06-18", "to": "2024-12-08" },
+    { "id": "bear26", "name": "Bear 2025–26 (so far)", "kind": "bear", "from": "2024-12-08", "to": null }
+   ],
+   "cy": { "t1": null, "t1l": "", "b1": null, "t2": "2021-05-04", "t2l": "May 2021", "b2": "2022-06-18", "b2l": "Jun 2022", "t3": "2024-12-08", "t3l": "Dec 2024" },
+   "pasts_labels": ["", "2021–22"],
+   "since": "Sep 2020", "sinceY": "2020", "readSince": "Aug 2022", "chart": ["2020-09-01", "All (from Sep 2020)"],
+   "sig": "Since the 100W first exists (Aug 2022) and the 200W (Jul 2024).",
+   "vsBtc": "UNI and BTC turn months apart (UNI topped in May 2021 and Dec 2024, BTC in Nov 2021 and Oct 2025; UNI bottomed in Jun 2022, BTC in Nov 2022). In this bear UNI already went far below its 2022 low (Jun 2026).",
+   "behave": "UNI's bulls and bears are dated from UNI's own tops and bottoms (its 2021 top in May, its 2022 low in June and its last top in Dec 2024). UNI trades from Sep 2020 only, so there is one past bear to compare (2021–22) and the 100W/200W start in Aug 2022 / Jul 2024.",
+   "dates": "low 4 Nov 2020, top 4 May 2021, bottom 18 Jun 2022, top 8 Dec 2024",
+   "hist": "UNI history starts 17 Sep 2020 (Binance UNIUSDT); the 100W exists from Aug 2022 and the 200W from Jul 2024, so the weekly read starts in Aug 2022."
+  },
+  "ARB": {
+   "name": "ARB", "an": "an", "series": "binance/ARBUSDT/1D",
+   "regimes": [
+    { "id": "drop20", "name": "Drop 2023", "kind": "bear", "from": "2023-04-14", "to": "2023-09-11" },
+    { "id": "bull23", "name": "Rally 2023–24", "kind": "bull", "from": "2023-09-11", "to": "2024-01-11" },
+    { "id": "bear26", "name": "Bear 2024–26 (so far)", "kind": "bear", "from": "2024-01-11", "to": null }
+   ],
+   "cy": { "t1": null, "t1l": "", "b1": null, "t2": null, "t2l": "", "b2": null, "b2l": "", "t3": "2024-01-11", "t3l": "Jan 2024" },
+   "pasts_labels": ["", ""],
+   "since": "Mar 2023", "sinceY": "2023", "readSince": "Feb 2025", "chart": ["2023-03-01", "All (from Mar 2023)"],
+   "sig": "Since the 100W first exists (Feb 2025). ARB has fewer than 200 weeks of data, so there is no 200W yet.",
+   "vsBtc": "ARB topped in Jan 2024, almost two years before BTC (Oct 2025), and has been in a bear since; it has no full cycle of its own yet.",
+   "behave": "ARB launched in Mar 2023: one short rally (Sep 2023 – Jan 2024) and one long bear since. There is no past bear to compare and no 200W yet, so its record is thin.",
+   "dates": "high 14 Apr 2023, low 11 Sep 2023, top 11 Jan 2024",
+   "hist": "ARB history starts 23 Mar 2023 (Binance ARBUSDT, its launch); the 100W exists from Feb 2025 and there is no 200W yet (fewer than 200 weeks), so the weekly read starts in Feb 2025 and the records are short."
+  },
+  "XLM": {
+   "name": "XLM", "an": "an", "series": "binance/XLMUSDT/1D",
+   "regimes": [
+    { "id": "drop20", "name": "Drop 2018–20", "kind": "bear", "from": "2018-07-25", "to": "2020-03-12" },
+    { "id": "bull21", "name": "Bull 2020–21", "kind": "bull", "from": "2020-03-12", "to": "2021-05-11" },
+    { "id": "bear22", "name": "Bear 2021–22", "kind": "bear", "from": "2021-05-11", "to": "2022-12-31" },
+    { "id": "bull23", "name": "Bull 2023–24", "kind": "bull", "from": "2022-12-31", "to": "2024-12-01" },
+    { "id": "bear26", "name": "Bear 2025–26 (so far)", "kind": "bear", "from": "2024-12-01", "to": null }
+   ],
+   "cy": { "t1": null, "t1l": "", "b1": null, "t2": "2021-05-11", "t2l": "May 2021", "b2": "2022-12-31", "b2l": "Dec 2022", "t3": "2024-12-01", "t3l": "Dec 2024" },
+   "pasts_labels": ["", "2021–22"],
+   "since": "May 2018", "sinceY": "2018", "readSince": "Apr 2020", "chart": ["2018-05-01", "All (from May 2018)"],
+   "sig": "Since the 100W first exists (Apr 2020) and the 200W (Mar 2022).",
+   "vsBtc": "XLM and BTC turn months apart (XLM topped in May 2021 and Dec 2024, BTC in Nov 2021 and Oct 2025; XLM bottomed in Dec 2022, a month after BTC).",
+   "behave": "XLM's bulls and bears are dated from XLM's own tops and bottoms (its 2021 top in May, its bear low on 31 Dec 2022 and its last top in Dec 2024). Binance XLMUSDT starts in May 2018, after XLM's Jan 2018 top, so the first period (Jul 2018 – Mar 2020) is a drop from the data start and only the 2021–22 bear is compared.",
+   "dates": "high 25 Jul 2018 (data starts May 2018), low 12 Mar 2020, top 11 May 2021, bottom 31 Dec 2022, top 1 Dec 2024",
+   "hist": "XLM history starts 31 May 2018 (Binance XLMUSDT); the 100W exists from Apr 2020 and the 200W from Mar 2022, so the weekly read starts in Apr 2020."
+  },
+  "TRX": {
+   "name": "TRX", "an": "a", "series": "binance/TRXUSDT/1D",
+   "regimes": [
+    { "id": "bear22", "name": "Bear 2021–22", "kind": "bear", "from": "2021-11-15", "to": "2022-11-17" },
+    { "id": "bull23", "name": "Bull 2022–24", "kind": "bull", "from": "2022-11-17", "to": "2024-12-03" },
+    { "id": "drop20", "name": "Drop 2024–25", "kind": "bear", "from": "2024-12-03", "to": "2025-03-16" },
+    { "id": "bull21", "name": "Recovery 2025–26 (so far)", "kind": "bull", "from": "2025-03-16", "to": null }
+   ],
+   "cy": { "t1": null, "t1l": "", "b1": null, "t2": "2021-11-15", "t2l": "Nov 2021", "b2": "2022-11-17", "b2l": "Nov 2022", "t3": "2024-12-03", "t3l": "Dec 2024" },
+   "pasts_labels": ["", "2021–22"],
+   "since": "May 2021", "sinceY": "2021", "readSince": "Apr 2023", "chart": ["2021-05-01", "All (from May 2021)"],
+   "sig": "Since the 100W first exists (Apr 2023) and the 200W (Mar 2025).",
+   "vsBtc": "TRX moves unlike most alts: it topped with BTC in Nov 2021 and bottomed with it in Nov 2022, but then trended up through 2023–24, topped on 3 Dec 2024 and recovered most of its 2025 drop while BTC fell.",
+   "behave": "TRX's periods are dated from TRX's own tops and bottoms (top 15 Nov 2021, bottom 17 Nov 2022, top 3 Dec 2024, low 16 Mar 2025). Binance TRXUSDT data here starts in May 2021, so there is one past bear to compare (2021–22).",
+   "dates": "top 15 Nov 2021, bottom 17 Nov 2022, top 3 Dec 2024, low 16 Mar 2025",
+   "hist": "TRX history starts 28 May 2021 (Binance TRXUSDT); the 100W exists from Apr 2023 and the 200W from Mar 2025, so the weekly read starts in Apr 2023."
+  }
+ }
+}

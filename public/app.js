@@ -13,7 +13,7 @@
   var when = function (t) { if (!t) return '-'; var d = new Date(t * 1000); return d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
   var kpi = function (lab, val, sub, k) { return '<div><b>' + lab + '</b><span class="' + (k || '') + '">' + val + '</span>' + (sub ? '<div class="note">' + sub + '</div>' : '') + '</div>'; };
   var slug = location.pathname.split('/')[1] || '', API = slug ? '/api/' + slug + '/' : 'api/';
-  var TABS = ['mss', 's083', 'mss-rvol', 'rsi-desk'], tab = TABS.indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'mss';
+  var TABS = ['mss', 's083', 'mss-rvol', 'rsi-desk', 'cycle-dca'], tab = TABS.indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'mss';
   var P = null, S = null, owner = false;
 
   function notYet(start) {
@@ -123,6 +123,7 @@
   function render() {
     document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === tab)); });
     if (tab === 'rsi-desk') { $('main').innerHTML = window.SignalDeskView.html(); window.SignalDeskView.mount(); }
+    else if (tab === 'cycle-dca') $('main').innerHTML = window.CycleDcaView.render(window.CycleDcaState, owner);
     else $('main').innerHTML = tab === 'mss-rvol' ? window.MssRvolView.render(window.MssRvolState, owner) : tab === 's083' ? s083() : top20(tab);
   }
   function say(text, kind) { var b = $('banner'); b.hidden = !text; b.textContent = text || ''; b.style.background = kind === 'ok' ? 'var(--sup-bg)' : ''; b.style.color = kind === 'ok' ? 'var(--sup)' : ''; }
@@ -165,8 +166,8 @@
   });
   window.addEventListener('hashchange', function () { var t = location.hash.slice(1); if (TABS.indexOf(t) >= 0) { tab = t; render(); } });
   var get = function (f) { return fetch(f, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); };
-  Promise.all([get('paper.json'), get('s083-paper.json'), get('mss-rvol.json')]).then(function (x) {
-    P = x[0]; S = x[1]; window.MssRvolState = x[2];
+  Promise.all([get('paper.json'), get('s083-paper.json'), get('mss-rvol.json'), get('cycle-dca.json')]).then(function (x) {
+    P = x[0]; S = x[1]; window.MssRvolState = x[2]; window.CycleDcaState = x[3];
     var st = (P && P.start) || (S && S.start), started = P && P.started;
     $('meta').textContent = (started ? 'Started ' + when(st) : typeof st === 'number' ? 'Starts ' + when(st) : 'Starts at go-live') + ' (your time) · fresh start, nothing carried over · closed 4H candles' + (P && P.generated ? ' · built ' + when(Date.parse(P.generated) / 1000) : '');
     render();
