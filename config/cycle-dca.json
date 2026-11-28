@@ -1,0 +1,10 @@
+{
+ "_about": "05 · Cycle DCA (owner, 28 Nov 2026): spot paper account that BUYS from the BTC & ETH dashboard's cycle-tab early bottom signs and is SOLD only by the owner (Book % / Close all). Signs come from a byte-identical copy of that dashboard's engine (cycle/build/usdtd.js, checked by reference/SOURCE_SHA256SUMS), run on Market-Data. Buy 1: the day 2 of the 6 early bottom signs have fired after a 30-day closing low (every early warning, no extra filter: owner's choice). Buy 2 (DCA): the day all 4 price-action signs (key reversal, close above the 10D, close above the 20D, ★ swing break) have fired in that same low. Fills at that day's close, fee per side. A low with fewer than 2 signs, or one whose 2nd sign fired before the start, is never bought.",
+ "coins": ["BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "LINK", "XLM", "ARB"],
+ "capital": 100000,
+ "size": 5000,
+ "fee_pct": 0.1,
+ "entry1_signs": 2,
+ "entry2_ids": ["rev", "d10", "d20", "swing"],
+ "start": "auto"
+}

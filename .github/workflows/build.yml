@@ -18,7 +18,7 @@ on:
     - cron: '15 1 * * *'   # daily safety net after the 11:30 and 11:40 Sydney loads (12:15 Sydney summer time); data commits trigger it too
   push:
     branches: [main]
-    paths: ['public/*.js', 'public/index.html', 'worker/**', 'build/**', 'config/**', 'reference/**', 'tests/**', 'wrangler.jsonc', '.github/workflows/build.yml']
+    paths: ['public/*.js', 'public/index.html', 'worker/**', 'build/**', 'config/**', 'cycle/**', 'reference/**', 'tests/**', 'wrangler.jsonc', '.github/workflows/build.yml']
 permissions:
   contents: write
 concurrency:
@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Coin Zones and Signal Desk engine files must be byte-identical to the originals
+      - name: Coin Zones, Signal Desk and cycle engine files must be byte-identical to the originals
         run: sha256sum -c --quiet reference/SOURCE_SHA256SUMS
       - name: Check secrets
         env:
@@ -77,8 +77,17 @@ jobs:
       - name: RSI Signal Desk warning
         if: ${{ steps.signaldesk.outcome == 'failure' }}
         run: echo "::warning::RSI Signal Desk did not update this run; other tabs saved. It keeps the last good candles until the next successful run."
+      - name: Cycle DCA (05), buys from the cycle-tab early bottom signs (byte-identical BTC & ETH dashboard engine), owner sells
+        id: cycledca
+        # Like MSS-RVOL: a failure here must not stop the other tabs from saving; cycle-dca.js writes nothing on failure.
+        continue-on-error: true
+        run: node build/cycle-dca.js md
+      - name: Cycle DCA warning
+        if: ${{ steps.cycledca.outcome == 'failure' }}
+        run: echo "::warning::Cycle DCA did not update this run; other tabs saved. It keeps its last good files until the next successful run."
       - name: Tests
         run: |
+          node tests/cycle-dca.js
           node tests/mss-rvol.js
           node tests/manual.js
           node tests/parity-ledgers.js md
@@ -94,6 +103,7 @@ jobs:
           git add config/start.json public/data.json public/freshness.json public/paper.json public/s083-paper.json state
           git add public/mss-rvol.json
           [ -f public/signal-desk.json ] && git add public/signal-desk.json
+          [ -f public/cycle-dca.json ] && git add public/cycle-dca.json
           [ -f public/pnl.json ] && git add public/pnl.json
           [ -f public/structure.json ] && git add public/structure.json
           if git diff --cached --quiet; then echo "Nothing changed."; exit 0; fi

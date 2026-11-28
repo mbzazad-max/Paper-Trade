@@ -62,3 +62,16 @@ The claude.ai "BTC RSI Signal Desk" moved here as a tab. **Live for BTC only** (
 - **Data:** `build/signal-desk.js` reads Market-Data `binance/<COIN>USDT` 4H and 1D, closed candles only, with the original page's windows (4H the last 5,000 candles, 1D from 1 Oct 2020), and writes `public/signal-desk.json`. Nothing new is pulled. It writes nothing on failure, so the last good file stays, and its step cannot stop the other tabs.
 - **Intended differences from the original page:** Paper-Trade's Refresh rebuilds it (no TradingView connector button or auto-refresh); no asset switch (BTC only); the comparison coin ETH is Binance ETHUSDT (was Coinbase ETHUSD); four class names are prefixed `sd-`.
 - **Test:** `node tests/signal-desk.js <market-data> <jsdom>` checks the engine bytes, that Market-Data BTC equals the original's TradingView BTC candles with identical trades, that the original page and the tab show identical text in every section for BTC on the same candles, and that BTC builds and renders.
+
+## 05 · Cycle DCA (spot, bought by the build, sold by the owner; 28 Nov 2026)
+
+Owner's idea: hold spot coins bought from the BTC & ETH dashboard's cycle tabs, with two buys (DCA), and decide the sells himself (looking at US stocks, USDT.D and sentiment). Coins: BTC, ETH, SOL, BNB, XRP, DOGE, LINK, XLM, ARB. $100,000 paper, $5,000 per buy, 0.1% fee each side (`config/cycle-dca.json`).
+
+- **Signs:** `cycle/build/usdtd.js` (+ `cycle/config/alts.json`, `cycle/history/eth_1d.csv`) is a byte-identical copy of the BTC & ETH dashboard's cycle engine, checked by `reference/SOURCE_SHA256SUMS`. It runs on Market-Data for each coin into a temp folder; its output matched the live dashboard's cycle JSONs sign for sign (28 Nov 2026). **When the dashboard's engine or alts.json changes, copy them again and update the checksums.**
+- **Buy 1:** at the close of the day the 2nd of the 6 "⚡ Early warning (daily)" bottom signs fired after a 30-day closing low (every early warning, no extra filter: owner's choice).
+- **Buy 2 (DCA):** at the close of the day the last of the 4 price-action signs (key reversal, close above the 10D, close above the 20D, ★ swing break) fired in the same low. Never before buy 1; not if the owner did Close all on that coin after buy 1.
+- At most 2 buys per low; a new, lower 30-day low is a new low. A buy is skipped (and listed) if cash is short.
+- **Fresh start:** the first build sets the start to the next 00:00 UTC; a low whose 2nd sign fired before the start is never bought.
+- **Sells (owner only):** Sell N% (1-99) or Close all of what is held, filled at the coin's last closed Binance 4H close, refused if that candle or the journal changed since the page loaded. No profit rule.
+- **Ledger:** buys appended once to `state/cycle-dca.json`; sells in `state/manual/cycle-dca.json`; average cost; `public/cycle-dca.json` for the page (`public/cycle-dca-ui.js`). On failure nothing is written and the other tabs still save.
+- **Tests:** `node tests/cycle-dca.js` (rules and ledger on made-up data); `tests/render.js` covers the tab for visitor and owner and the request a Sell % sends.
