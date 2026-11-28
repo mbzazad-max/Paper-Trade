@@ -21,6 +21,7 @@ on:
     paths: ['public/*.js', 'public/index.html', 'worker/**', 'build/**', 'config/**', 'cycle/**', 'reference/**', 'tests/**', 'wrangler.jsonc', '.github/workflows/build.yml']
 permissions:
   contents: write
+  issues: write
 concurrency:
   group: paper-trade
   cancel-in-progress: false
@@ -96,6 +97,20 @@ jobs:
           node tests/signal-desk.js md jsdom
           node tests/parity.js md jsdom > parity.json || { cat parity.json; exit 1; }
           node tests/fresh-start.js md
+      - name: Cycle DCA buy emails (GitHub issue mentioning the owner, one per new buy; never twice)
+        if: ${{ steps.cycledca.outcome == 'success' }}
+        # A failed send must not stop the build from saving; an unsent buy is tried again next build.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node build/cycle-dca-alerts.js prepare "$RUNNER_TEMP/cdm"
+          for f in "$RUNNER_TEMP"/cdm/*.id; do
+            [ -e "$f" ] || continue
+            k="${f%.id}"
+            url="$(gh issue create --repo "$GITHUB_REPOSITORY" --title "$(cat "$k.title")" --body-file "$k.md")" || { echo "::warning::Cycle DCA email not sent for $(cat "$f"); will retry next build."; continue; }
+            node build/cycle-dca-alerts.js mark "$(cat "$f")" "$url"
+          done
       - name: Save (one commit)
         run: |
           git config user.name "github-actions[bot]"

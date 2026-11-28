@@ -39,3 +39,17 @@ assert.ok(Math.abs(A.equity - A.cash) < 1e-9);
 A = account(cfg, buys, [{ sym: 'BTC', kind: 'close', percent: 100, t: Date.parse('2026-12-05T00:00:00Z') / 1000, px: 45000 }], prices);
 assert.ok(Math.abs(A.coins.BTC.qty - 4995 / 40000) < 1e-9, 'only buy 2 is held after the close');
 console.log('cycle-dca: ok (buy 1 at 2 signs, buy 2 at the 4 price-action signs, start rule, no repeats, average cost, Sell % / Close all)');
+
+// buy emails (build/cycle-dca-alerts.js email()): title, owner mention, fill, link; a skipped buy says so
+{
+  const { email } = require('../build/cycle-dca-alerts.js');
+  const pub = { cash: 95000, equity: 100100, return_pct: 0.1, coins: [{ sym: 'BTC', qty: 0.0999, avg: 50050.05, buys: 1, low: { day: '2026-12-01', v: 48000 },
+    signs: [{ id: 'div', label: 'RSI divergence', fired: '2026-12-01' }, { id: 'd10', label: 'Close above the 10D', fired: '2026-12-03' }] }] };
+  const e = email({ id: 'BTC|2026-12-01|1', sym: 'BTC', n: 1, day: '2026-12-03', px: 50000, size: 5000, low: '2026-12-01', signs: ['div', 'd10'] }, pub, cfg);
+  assert.match(e.title, /^Cycle DCA: bought BTC \(buy 1\) at \$50,000 · 2026-12-03 close$/);
+  assert.match(e.body, /@mbzazad-max/); assert.match(e.body, /0\.0999 BTC/); assert.match(e.body, /Close above the 10D \(2026-12-03\)/);
+  assert.match(e.body, /4\.2% above/); assert.match(e.body, /paper-trade\/#cycle-dca/);
+  const s = email({ id: 'ETH|2026-12-01|2', sym: 'ETH', n: 2, day: '2026-12-09', px: 2000, size: 5000, low: '2026-12-01', signs: ['rev', 'd10', 'd20', 'swing'], skipped: 'cash $3000 under $5000' }, pub, cfg);
+  assert.match(s.title, /SKIPPED buy ETH \(buy 2\)/); assert.match(s.body, /did not buy\*\* ETH: cash \$3000 under \$5000/); assert.doesNotMatch(s.body, /Coins bought/);
+}
+console.log('cycle-dca email: ok');
