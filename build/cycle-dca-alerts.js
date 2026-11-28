@@ -30,15 +30,16 @@ function email(b, pub, cfg) {
   const fee = (cfg && cfg.fee_pct != null ? cfg.fee_pct : 0.1) / 100, qty = (b.size - b.size * fee) / b.px;
   const signLabel = (id) => (coin && coin.signs && (coin.signs.find((s) => s.id === id) || {}).label) || LABEL[id] || id;
   const signDay = (id) => (coin && coin.low && coin.low.day === b.low && (coin.signs.find((s) => s.id === id) || {}).fired) || '';
+  const metal = !!(coin && coin.tf === '1D'), unit = metal ? 'oz' : b.sym;
   const what = b.n === 1 ? 'Buy 1 (2 early bottom signs after a 30-day low)' : 'Buy 2 / DCA (all 4 price-action signs in the same low)';
   const title = (b.skipped ? 'Cycle DCA: SKIPPED buy ' : 'Cycle DCA: bought ') + b.sym + ' (buy ' + b.n + ') at ' + usd(b.px) + ' · ' + b.day + ' close';
   const L = [];
   L.push(OWNER + ' 05 · Cycle DCA ' + (b.skipped ? '**did not buy** ' + b.sym + ': ' + b.skipped + '.' : '**bought ' + b.sym + '** on the paper account.'), '');
   L.push('| | |', '|---|---|');
-  L.push('| Coin | ' + b.sym + 'USDT (spot, paper) |');
+  L.push('| Coin | ' + (coin && coin.market ? coin.market : b.sym + 'USDT') + ' (spot, paper) |');
   L.push('| Buy | ' + what + ' |');
   L.push('| Fill | ' + usd(b.px) + ' = the ' + b.day + ' daily close |');
-  if (!b.skipped) { L.push('| Size | ' + usd(b.size) + ' (fee ' + usd(b.size * fee) + ') |'); L.push('| Coins bought | ' + (+qty.toPrecision(8)) + ' ' + b.sym + ' |'); }
+  if (!b.skipped) { L.push('| Size | ' + usd(b.size) + ' (fee ' + usd(b.size * fee) + ') |'); L.push('| ' + (metal ? 'Ounces' : 'Coins') + ' bought | ' + (+qty.toPrecision(8)) + ' ' + unit + ' |'); }
   L.push('| 30-day low | ' + b.low + (coin && coin.low && coin.low.day === b.low ? ' at ' + usd(coin.low.v) + ' (' + ((b.px / coin.low.v - 1) * 100).toFixed(1) + '% above)' : '') + ' |');
   L.push('| Signs | ' + (b.signs || []).map((id) => signLabel(id) + (signDay(id) ? ' (' + signDay(id) + ')' : '')).join(', ') + ' |');
   if (coin && !b.skipped) L.push('| ' + b.sym + ' held now | ' + coin.qty + ' ' + b.sym + ', avg cost ' + (coin.avg == null ? '-' : usd(coin.avg)) + ', ' + coin.buys + ' buy(s) |');

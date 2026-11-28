@@ -14,6 +14,10 @@
    changed since the page loaded. No profit rule: in spot the owner decides.
    Ledger: average cost; fee on every buy and sell. Buys are appended to state/cycle-dca.json once (never rewritten); sells are the
    journal state/manual/cycle-dca.json. Everything else is recomputed from those two each build.
+   Gold and silver (owner, 28 Nov 2026): the same rules on the Metal Cycle page's own "Early warning (daily)" bottom block, made by
+   that page's engine (metal/page_engine.js + metal/index.original.html, byte-identical to repo Metal, in SOURCE_SHA256SUMS) on
+   Market-Data tv/TVC_GOLD/1D and tv/TVC_SILVER/1D. Its signs map to the crypto ids: keyrev -> rev, c10 -> d10, c20 -> d20 (div,
+   div10, swing the same). Metals have daily candles only, so their sells fill at the last closed DAILY close (not 4H).
    Writes public/cycle-dca.json. On any failure nothing is written (the last good files stay).
    usage: node build/cycle-dca.js <market-data dir> */
 'use strict';
@@ -22,7 +26,12 @@ const ROOT = path.resolve(__dirname, '..');
 const CFG = path.join(ROOT, 'config', 'cycle-dca.json'), STATE = path.join(ROOT, 'state', 'cycle-dca.json');
 const JOURNAL = path.join(ROOT, 'state', 'manual', 'cycle-dca.json'), PUB = path.join(ROOT, 'public', 'cycle-dca.json');
 const ENGINE = path.join(ROOT, 'cycle', 'build', 'usdtd.js');
-const DAY = 86400;
+const DAY = 86400, H4 = 4 * 3600;
+const METAL_ENGINE = path.join(ROOT, 'metal', 'page_engine.js'), METAL_PAGE = path.join(ROOT, 'metal', 'index.original.html');
+const METAL_IDS = { div: 'div', div10: 'div10', keyrev: 'rev', c10: 'd10', swing: 'swing', c20: 'd20' };
+const METAL_LABEL = { div: 'RSI divergence at the low (setup)', div10: 'Divergence, then a close above the 10D', keyrev: "Key reversal: close above the low day's high",
+  c10: 'Daily close above the 10D', swing: 'Swing break: close above the highest close of the 5 sessions before the low', c20: 'Daily close above the 20D' };   // the Metal page's lbl()
+const sellAt = (a) => a.t + (a.dur || H4);   // a sale counts from the close of the candle it filled at (4H coins; daily for metals)
 const rd = (f, d) => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : d);
 const save = (f, v) => { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f + '.tmp', JSON.stringify(v, null, 1) + '\n'); fs.renameSync(f + '.tmp', f); };
 const clock = () => (process.env.BUILD_NOW ? Number(process.env.BUILD_NOW) : Math.floor(Date.now() / 1000));
@@ -37,11 +46,30 @@ function cycleJson(md, sym) {
   if (!fs.existsSync(out)) throw new Error(sym + ': the cycle engine wrote nothing');
   const J = JSON.parse(fs.readFileSync(out, 'utf8')); fs.rmSync(dir, { recursive: true, force: true }); return J;
 }
-/* last closed Binance 4H candle (Market-Data keeps closed candles only): {t: open time, c: close} */
-function last4h(md, sym) {
-  const f = path.join(md, 'data', 'binance', sym + 'USDT_4H.csv');
+/* last closed candle (Market-Data keeps closed candles only): Binance 4H for coins, the daily for gold/silver. {t: open time, c: close, dur} */
+function lastClose(md, cfg, sym) {
+  const m = cfg.metals && cfg.metals[sym], id = m ? m.daily.split('/') : null;
+  const f = m ? path.join(md, 'data', id[0], id[1] + '_' + id[2] + '.csv') : path.join(md, 'data', 'binance', sym + 'USDT_4H.csv');
   const L = fs.readFileSync(f, 'utf8').trim().split('\n'), p = L[L.length - 1].split(',');
-  return { t: +p[0], c: +p[4] };
+  return m ? { t: +p[0], c: +p[4], dur: DAY } : { t: +p[0], c: +p[4] };
+}
+/* gold/silver: the Metal page's own engine on the Market-Data daily bars (as repo Metal's build/build.js feeds it) */
+let metalEngine = null;
+function metalSignals(md, cfg, sym, now) {
+  const m = cfg.metals[sym], id = m.daily.split('/'), from = T(cfg.metal_from || '2008-01-01');
+  const L = fs.readFileSync(path.join(md, 'data', id[0], id[1] + '_' + id[2] + '.csv'), 'utf8').trim().split('\n'); L.shift();
+  const B = { t: [], o: [], h: [], l: [], c: [], v: [] };
+  for (const ln of L) { const p = ln.split(','), t = +p[0]; if (t < from) continue; B.t.push(t); B.o.push(+p[1]); B.h.push(+p[2]); B.l.push(+p[3]); B.c.push(+p[4]); B.v.push(+p[5] || 0); }
+  if (B.t.length < 1500) throw new Error(sym + ': only ' + B.t.length + ' daily candles');
+  if (!metalEngine) metalEngine = require(METAL_ENGINE).load(fs.readFileSync(METAL_PAGE, 'utf8'));
+  const D = metalEngine.build(m.name, B, now * 1000), c = D && D.bottom && D.bottom.early && D.bottom.early.current;
+  if (!c || !c.date || !c.fired) throw new Error(sym + ': no early-warning bottom block');
+  const close = new Map(B.t.map((t, i) => [day(t), B.c[i]]));
+  return {
+    low: { day: c.date, v: c.price }, expired: !c.live, status: D.read && D.read.now ? String(D.read.now) : '',
+    signs: Object.keys(METAL_IDS).map((k) => ({ id: METAL_IDS[k], label: METAL_LABEL[k], fired: c.fired[k] ? c.fired[k].date : null, level: c.levels && c.levels[k] != null ? r6(c.levels[k]) : null })),
+    close: (d) => (close.has(d) ? close.get(d) : null), last_day: D.head && D.head.date, last_close: D.head && D.head.price,
+  };
 }
 
 /* what the early-warning block says, reduced to what the ledger needs */
@@ -78,7 +106,7 @@ function account(cfg, buys, journal, prices) {
   for (const s of cfg.coins) coins[s] = { sym: s, qty: 0, cost: 0, realized: 0, fees: 0, buys: 0, sells: 0 };
   let cash = cfg.capital;
   const ev = buys.filter((b) => !b.skipped).map((b) => ({ k: 'buy', t: T(b.day) + DAY, b }))
-    .concat(journal.map((a) => ({ k: 'sell', t: a.t + 4 * 3600, a })))
+    .concat(journal.map((a) => ({ k: 'sell', t: sellAt(a), a })))
     .sort((x, y) => x.t - y.t || (x.k === 'buy' ? -1 : 1));
   const trades = [];
   for (const e of ev) {
@@ -92,7 +120,7 @@ function account(cfg, buys, journal, prices) {
       const share = e.a.kind === 'close' ? 1 : e.a.percent / 100, qty = c.qty * share, gross = qty * e.a.px, f = gross * fee, basis = c.cost * share;
       c.realized += gross - f - basis; c.fees += f; c.qty -= qty; c.cost -= basis; c.sells++; cash += gross - f;
       if (e.a.kind === 'close') { c.qty = 0; c.cost = 0; }
-      trades.push({ kind: 'sell', sym: c.sym, what: e.a.kind === 'close' ? 'Close all' : 'Book ' + e.a.percent + '%', t: e.a.t, px: e.a.px, qty: r6(qty), usd: r2(gross - f), pnl: r2(gross - f - basis) });
+      trades.push({ kind: 'sell', sym: c.sym, what: e.a.kind === 'close' ? 'Close all' : 'Book ' + e.a.percent + '%', t: e.a.t, dur: e.a.dur || H4, px: e.a.px, qty: r6(qty), usd: r2(gross - f), pnl: r2(gross - f - basis) });
     }
   }
   let value = 0;
@@ -111,7 +139,7 @@ function build(md, now) {
   const startDay = day(st.start), started = now >= st.start, journal = rd(JOURNAL, []);
   const bought = new Set(st.buys.map((b) => b.id)), prices = {}, rows = {};
   for (const sym of cfg.coins) {
-    const S = signals(cycleJson(md, sym)); prices[sym] = last4h(md, sym);
+    const S = cfg.metals && cfg.metals[sym] ? metalSignals(md, cfg, sym, now) : signals(cycleJson(md, sym)); prices[sym] = lastClose(md, cfg, sym);
     rows[sym] = S;
     if (!started) continue;
     for (const b of due(cfg, startDay, sym, S, bought)) {
@@ -120,7 +148,7 @@ function build(md, now) {
       const rec = { ...b, px, size: cfg.size, at: now };
       // the owner closed this coin after this low's first buy: no DCA back into the same low
       const b1 = st.buys.find((x) => x.id === b.sym + '|' + b.low + '|1');
-      if (b.n === 2 && b1 && journal.some((a) => a.sym === b.sym && a.kind === 'close' && a.t + 4 * 3600 > T(b1.day) + DAY)) rec.skipped = 'you closed ' + b.sym + ' after buy 1 of this low';
+      if (b.n === 2 && b1 && journal.some((a) => a.sym === b.sym && a.kind === 'close' && sellAt(a) > T(b1.day) + DAY)) rec.skipped = 'you closed ' + b.sym + ' after buy 1 of this low';
       else if (acc.cash < cfg.size) rec.skipped = 'cash $' + Math.round(acc.cash) + ' under $' + cfg.size;
       st.buys.push(rec); bought.add(b.id);
       console.log('Cycle DCA ' + (rec.skipped ? 'SKIPPED ' : '') + 'buy ' + b.n + ' ' + sym + ' at the ' + b.day + ' close ' + px + (rec.skipped ? ' (' + rec.skipped + ')' : ''));
@@ -133,13 +161,13 @@ function build(md, now) {
     cash: r2(A.cash), value: r2(A.value), equity: r2(A.equity), pnl: r2(A.equity - cfg.capital), return_pct: r2((A.equity / cfg.capital - 1) * 100),
     coins: cfg.coins.map((s) => {
       const c = A.coins[s], S = rows[s], key = s + '|' + S.low.day, nb = st.buys.filter((b) => b.sym === s && b.low === S.low.day);
-      return { sym: s, qty: r6(c.qty), avg: c.avg == null ? null : r6(c.avg), cost: r2(c.cost), price: c.price, last_close: c.price_t, value: r2(c.value),
+      return { sym: s, market: cfg.metals && cfg.metals[s] ? cfg.metals[s].name + ' (' + cfg.metals[s].tv + ')' : s + 'USDT', tf: cfg.metals && cfg.metals[s] ? '1D' : '4H', qty: r6(c.qty), avg: c.avg == null ? null : r6(c.avg), cost: r2(c.cost), price: c.price, last_close: c.price_t, value: r2(c.value),
         unrealized: r2(c.unrealized), realized: r2(c.realized), buys: c.buys, sells: c.sells,
         low: S.low, expired: S.expired, status: S.status, signs: S.signs, fired: S.signs.filter((x) => x.fired).length,
         low_buys: nb.map((b) => ({ n: b.n, day: b.day, px: b.px, skipped: b.skipped || null })), episode: key };
     }),
     trades: A.trades.slice(0, 100), skipped: st.buys.filter((b) => b.skipped).slice(-20),
-    source: 'Signs: the BTC & ETH dashboard cycle engine (byte-identical copy) on Market-Data daily closes. Prices: Market-Data Binance <COIN>USDT 4H (last closed candle).',
+    source: 'Signs: the BTC & ETH dashboard cycle engine (byte-identical copy) on Market-Data daily closes; gold and silver: the Metal Cycle page engine (byte-identical copy) on Market-Data TVC:GOLD / TVC:SILVER daily. Prices: Market-Data Binance <COIN>USDT 4H, gold/silver daily (last closed candle).',
   };
   return { st, pub, A, journal, cfg };
 }
@@ -159,16 +187,17 @@ function recordManualAction(md, p) {
   if (p.kind === 'book' && !(Number.isInteger(p.percent) && p.percent >= 1 && p.percent <= 99)) throw new Error('Action refused: Book % must be 1-99');
   if (journal.some((a) => a.nonce === p.nonce)) { console.log('Already done (same request id); nothing changed.'); return; }
   if (p.journal_count !== journal.length) throw new Error('Action refused: another action was saved since the page loaded; reload and try again');
-  const prices = {}; for (const s of cfg.coins) prices[s] = last4h(md, s);
+  const prices = {}; for (const s of cfg.coins) prices[s] = lastClose(md, cfg, s);
   const c = account(cfg, st.buys, journal, prices).coins[p.sym];
   if (!(c.qty > 0)) throw new Error('Action refused: nothing held in ' + p.sym);
-  if (prices[p.sym].t !== p.last_close) throw new Error('Action refused: a new 4H candle has closed since the page loaded; reload and check again');
+  if (prices[p.sym].t !== p.last_close) throw new Error('Action refused: a new ' + (prices[p.sym].dur ? 'daily' : '4H') + ' candle has closed since the page loaded; reload and check again');
   const a = { nonce: p.nonce, sym: p.sym, kind: p.kind, percent: p.kind === 'close' ? 100 : p.percent, t: prices[p.sym].t, px: prices[p.sym].c, at: now };
+  if (prices[p.sym].dur) a.dur = prices[p.sym].dur;
   const after = account(cfg, st.buys, journal.concat(a), prices).coins[p.sym];
   if (!(after.qty < c.qty)) throw new Error('Action refused: the sale did not apply');
   save(JOURNAL, journal.concat(a));
-  console.log('Saved: cycle-dca ' + (p.kind === 'close' ? 'Close all' : 'Book ' + p.percent + '%') + ' ' + p.sym + ' at the 4H close ' + a.px + ' (' + new Date(a.t * 1000).toISOString().slice(0, 16) + ' UTC)');
+  console.log('Saved: cycle-dca ' + (p.kind === 'close' ? 'Close all' : 'Book ' + p.percent + '%') + ' ' + p.sym + ' at the ' + (a.dur ? 'daily' : '4H') + ' close ' + a.px + ' (' + new Date(a.t * 1000).toISOString().slice(0, 16) + ' UTC)');
 }
 
-module.exports = { signals, due, account, build, recordManualAction };
+module.exports = { signals, metalSignals, due, account, build, recordManualAction };
 if (require.main === module) { try { main(); } catch (e) { console.error('::error::Cycle DCA not updated, last good kept: ' + (e.message || e)); process.exit(1); } }

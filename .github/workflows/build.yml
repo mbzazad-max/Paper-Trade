@@ -18,7 +18,7 @@ on:
     - cron: '15 1 * * *'   # daily safety net after the 11:30 and 11:40 Sydney loads (12:15 Sydney summer time); data commits trigger it too
   push:
     branches: [main]
-    paths: ['public/*.js', 'public/index.html', 'worker/**', 'build/**', 'config/**', 'cycle/**', 'reference/**', 'tests/**', 'wrangler.jsonc', '.github/workflows/build.yml']
+    paths: ['public/*.js', 'public/index.html', 'worker/**', 'build/**', 'config/**', 'cycle/**', 'metal/**', 'reference/**', 'tests/**', 'wrangler.jsonc', '.github/workflows/build.yml']
 permissions:
   contents: write
   issues: write

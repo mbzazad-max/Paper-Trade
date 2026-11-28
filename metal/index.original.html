@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Metal Cycle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: an assay report — exact, calm, every figure dated.
+   IDEA: a bullion assay certificate: each metal gets a stamped bar header and a graded checklist.
+   PICTURE: weekly close on a log scale with the 50W/100W/200W bands, the cycle turns pinned on it.
+   COLOUR and TYPE: white and graphite; a flat field of the metal's own colour (gold #d9b13b / silver #b9c0c8); red and green only for read state. Barlow Condensed + IBM Plex Sans.
+   LAYOUT: metal switch, finding + figures + chart, then the template's sections in order with section links. */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#121315);--ink:light-dark(#1b1d20,#e9e9e6);--mute:light-dark(#62666c,#a3a7ad);--line:light-dark(#e3e4e6,#2a2c30);--soft:light-dark(#f5f5f3,#1b1d20);--metal:#d9b13b;--metalink:#2a2208;--up:light-dark(#1f7a4a,#5fcf8e);--dn:light-dark(#c0392b,#ff7b6b)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+body.silver{--metal:#b9c0c8;--metalink:#15191d}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "IBM Plex Sans",system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:"Barlow Condensed",sans-serif;font-weight:700;line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(32px,5vw,50px)}h2{font-size:30px;margin-bottom:12px}h3{font-size:21px;margin:22px 0 8px}
+.wrap{max-width:1240px;margin:0 auto}
+.band{padding:clamp(24px,4vw,52px) max(5vw,16px)}
+.bar{background:var(--metal);color:var(--metalink)}
+.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding-top:18px;padding-bottom:18px}
+.brand{font-family:"Barlow Condensed";font-weight:700;font-size:24px;letter-spacing:.02em}
+.sw{display:flex;gap:6px}.sw button{font:600 16px "IBM Plex Sans";min-height:44px;padding:0 20px;border-radius:999px;border:2px solid var(--metalink);background:transparent;color:var(--metalink);cursor:pointer}
+.sw button[aria-pressed=true]{background:var(--metalink);color:var(--metal)}
+.sw button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.stale{font-size:14px;max-width:62ch}
+.rf{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}.rf button{font:600 15px "IBM Plex Sans";min-height:44px;padding:0 18px;border-radius:8px;border:2px solid var(--metalink);background:var(--metalink);color:var(--metal);cursor:pointer}.rf button:disabled{opacity:.55;cursor:progress}.rf button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}.rfmsg{font-size:14px;max-width:46ch}
+.hero{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:28px;align-items:start}
+.read{display:inline-block;font:700 15px "IBM Plex Sans";padding:4px 12px;border-radius:6px;margin-bottom:12px;color:#fff}
+.r-Bear{background:#b23a2c}.r-Bull{background:#1f7a4a}.r-Turning{background:#8a6a12}.r-ending{background:#6b4f8f}
+.lead{color:var(--mute);margin:12px 0 18px;max-width:60ch}
+.figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.figs div{background:var(--bg);padding:10px 12px}.figs b{display:block;font:700 clamp(20px,2.6vw,26px) "Barlow Condensed";white-space:nowrap}.figs span{font-size:13px;color:var(--mute)}
+.fig{position:relative;min-height:360px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;padding:6px 9px;border-radius:6px;white-space:nowrap;display:none;z-index:2}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--mute);margin-top:8px}.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px}
+nav.scroll{display:flex;gap:6px;overflow-x:auto;padding:10px max(5vw,16px);border-block:1px solid var(--line);background:var(--bg)}
+nav.scroll a{flex:none;color:var(--ink);text-decoration:none;font-size:14px;padding:8px 12px;border-radius:999px;background:var(--soft)}
+@media(min-width:900px){nav.scroll{position:sticky;top:0;z-index:3}}
+section{border-bottom:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-weight:600;color:var(--mute);font-size:13px;vertical-align:bottom}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+tr.star td:first-child{font-weight:600}
+.scroll{overflow-x:auto}
+.ok{color:var(--up);font-weight:600}.no{color:var(--dn);font-weight:600}.m{color:var(--mute)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{font-size:13px;padding:5px 9px;border-radius:6px;background:var(--soft)}
+.chip b{display:block;font-size:12px;color:var(--mute);font-weight:500}
+.note{font-size:14px;color:var(--mute);max-width:75ch}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px 32px}
+.lv{list-style:none;padding:0;margin:0}.lv li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}.lv li span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+details{margin-top:12px}summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+.sum{font-size:18px;max-width:70ch}.sum p{margin:0 0 8px}
+.tag{font-size:11px;padding:1px 6px;border-radius:4px;background:var(--metal);color:var(--metalink);margin-left:6px;font-weight:600}
+@media(max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}.fig{min-height:300px}}
+@media(max-width:600px){table{font-size:13px}.figs{grid-template-columns:repeat(2,minmax(0,1fr))}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8.5em;text-align:start;white-space:normal}.stack td::before{content:attr(data-l);float:inline-start;width:8em;margin-inline-start:-8.5em;color:var(--mute);white-space:normal}.stack td:empty{display:none}}
+@media(prefers-reduced-motion:no-preference){.fig path.ln{transition:opacity .3s}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<div class="bar"><div class="wrap band top">
+  <div class="brand">Metal Cycle</div>
+  <div class="sw" role="group" aria-label="Metal">
+    <button id="b-gold" aria-pressed="true">Gold</button><button id="b-silver" aria-pressed="false">Silver</button>
+  </div>
+  <div class="stale" id="stale"></div>
+  <div class="rf"><button id="refresh" type="button" hidden>Refresh from TradingView</button><span class="rfmsg" id="rfmsg" role="status" aria-live="polite"></span></div>
+</div></div>
+
+<div class="wrap band hero" id="hero">
+  <div>
+    <span class="read" id="readpill"></span>
+    <h1 id="title"></h1>
+    <p class="lead" id="lead"></p>
+    <div class="figs" id="figs"></div>
+  </div>
+  <div>
+    <div class="fig" id="chart"><svg id="svg" role="img" aria-label="Weekly close with 50, 100 and 200 week averages"></svg><div class="tip" id="tip"></div></div>
+    <div class="legend"><span><i style="background:var(--ink)"></i>Weekly close (log scale)</span><span><i style="background:#d08a1e"></i>50W</span><span><i style="background:#3f7fbf"></i>100W</span><span><i style="background:#8a8f96"></i>200W</span><span>▲▼ cycle bottoms and tops</span></div>
+  </div>
+</div>
+
+<nav class="scroll" aria-label="Sections">
+  <a href="#read">This week's read</a><a href="#bottom">Bottom watch</a><a href="#topw">Top watch</a><a href="#levels">Levels to watch</a><a href="#swings">Tops and bottoms</a><a href="#now">Where it sits</a><a href="#phases">SMA by phase</a><a href="#pair">Gold vs silver</a><a href="#summary">Summary</a>
+</nav>
+
+<section id="read"><div class="wrap band">
+  <h2>This week's read</h2>
+  <p id="readline"></p>
+  <div class="cols">
+    <div><h3>Checklist</h3><div class="scroll"><table class="stack" id="check"></table></div></div>
+    <div><h3>Last 8 weeks</h3><div class="chips" id="last8"></div>
+      <h3>Track record of the read</h3><p class="note" id="record"></p></div>
+  </div>
+  <details><summary>Every change of the read since the data starts</summary><div class="scroll"><table id="changes"></table></div></details>
+</div></section>
+
+<section id="bottom"><div class="wrap band">
+  <h2>Bottom watch: has it bottomed?</h2>
+  <div id="bwatch"></div>
+</div></section>
+
+<section id="topw"><div class="wrap band">
+  <h2>Top watch: has it peaked?</h2>
+  <div id="twatch"></div>
+</div></section>
+
+<section id="levels"><div class="wrap band">
+  <h2>Levels to watch next</h2>
+  <div class="cols"><div><h3>Upside: signs not yet fired</h3><ul class="lv" id="lvup"></ul></div><div><h3>Downside</h3><ul class="lv" id="lvdn"></ul></div></div>
+</div></section>
+
+<section id="swings"><div class="wrap band">
+  <h2>Every top and bottom</h2>
+  <p class="note">Swings alternate between 90-day closing highs and lows (63 trading days on daily bars; 13 weeks on weekly closes before the daily data starts). "Cycle" marks the biggest turns, the extreme close within a year either side. Daily signs exist only where daily bars do.</p>
+  <div class="scroll"><table id="swt"></table></div>
+  <details><summary>Show all swings</summary><div class="scroll"><table id="swall"></table></div></details>
+</div></section>
+
+<section id="now"><div class="wrap band">
+  <h2>Where it sits now</h2>
+  <div class="scroll"><table id="smat"></table></div>
+  <ul id="notes" class="note"></ul>
+</div></section>
+
+<section id="phases"><div class="wrap band">
+  <h2>How it treated each SMA, by phase</h2>
+  <p class="note">Above = share of closes above the SMA. Support held = came down to it (low within 1%) and closed back above: held/tested. Resistance held = came up to it (high within 1%) and closed back under. Stack = days with 20&gt;50&gt;100&gt;200D / reversed. Daily columns cover only the part of a phase with daily bars.</p>
+  <div id="phmain"></div>
+  <details><summary>All phases</summary><div id="phall"></div></details>
+</div></section>
+
+<section id="pair"><div class="wrap band">
+  <h2>Gold vs silver</h2>
+  <div class="scroll"><table id="pairt"></table></div>
+  <p id="pairline"></p>
+</div></section>
+
+<section id="summary"><div class="wrap band">
+  <h2>Summary</h2>
+  <div class="sum" id="sumtxt"></div>
+  <h3>How this was built</h3>
+  <ul class="note" id="honest"></ul>
+</div></section>
+
+<script>
+/* Metal Cycle engine: JS port of claude/metalcycle/engine.py (Cycle Tab - Asset Template, Part B).
+   build(name, bars{t,o,h,l,c}, nowMs) -> same object as engine.build(). Dates are day numbers (days since 1970-01-01 UTC). */
+(function (root) {
+  const DAY = 86400;
+  const sdate = t => Math.floor((t + 6 * 3600) / DAY);
+  const wkday = d => (d + 3) % 7; // Monday = 0
+  const iso = d => new Date(d * DAY * 1000).toISOString().slice(0, 10);
+  const yearOf = d => new Date(d * DAY * 1000).getUTCFullYear();
+  const monthOf = d => new Date(d * DAY * 1000).getUTCMonth();
+  function sma(a, n) { const out = new Array(a.length).fill(null); let s = 0;
+    for (let i = 0; i < a.length; i++) { s += a[i]; if (i >= n) s -= a[i - n]; if (i >= n - 1) out[i] = s / n; } return out; }
+  function rsi(a, n = 14) { const out = new Array(a.length).fill(null); if (a.length <= n) return out; let g = 0, l = 0;
+    for (let i = 1; i <= n; i++) { const d = a[i] - a[i - 1]; g += Math.max(d, 0); l += Math.max(-d, 0); }
+    g /= n; l /= n; out[n] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+    for (let i = n + 1; i < a.length; i++) { const d = a[i] - a[i - 1]; g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n; out[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l); }
+    return out; }
+  const pct = (a, b) => (a == null || b == null || b === 0) ? null : (a / b - 1) * 100;
+  const r2 = (x, k = 2) => { if (x == null) return null; // Python round(): exact value, ties to even
+    const e = Math.abs(x).toFixed(k + 40), dot = e.indexOf('.'), tail = e.slice(dot + 1 + k);
+    if (/^50*$/.test(tail)) { const f = Math.pow(10, k), fl = Math.floor(Math.abs(x) * f), v = (fl % 2 === 0 ? fl : fl + 1) / f; return x < 0 ? -v : v; }
+    return Number(Number(x).toFixed(k)); };
+  function med(v) { v = v.filter(x => x != null).sort((a, b) => a - b); if (!v.length) return null; const m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; }
+  const mn = (a, s, e) => { let m = Infinity; for (let i = Math.max(0, s); i < Math.min(a.length, e); i++) if (a[i] < m) m = a[i]; return m; };
+  const mx = (a, s, e) => { let m = -Infinity; for (let i = Math.max(0, s); i < Math.min(a.length, e); i++) if (a[i] > m) m = a[i]; return m; };
+
+  function build(name, bars, nowMs) {
+    const nowS = (nowMs == null ? Date.now() : nowMs) / 1000;
+    const idx = bars.t.map((_, i) => i).sort((a, b) => bars.t[a] - bars.t[b]);
+    const m = new Map();
+    for (const i of idx) m.set(sdate(bars.t[i]), [bars.o[i], bars.h[i], bars.l[i], bars.c[i], bars.t[i]]);
+    let dates = [...m.keys()].sort((a, b) => a - b);
+    let forming = null, fd = null;
+    if (dates.length && dates[dates.length - 1] * DAY + 22 * 3600 > nowS) { forming = dates[dates.length - 1]; fd = m.get(forming); m.delete(forming); dates = dates.slice(0, -1); }
+    const D = dates, O = D.map(d => m.get(d)[0]), H = D.map(d => m.get(d)[1]), L = D.map(d => m.get(d)[2]), C = D.map(d => m.get(d)[3]);
+    const n = C.length;
+    const S = {}; for (const k of [10, 20, 50, 100, 200]) S[k] = sma(C, k);
+    const R = rsi(C);
+    const wk = new Map();
+    for (let i = 0; i < n; i++) { const mon = D[i] - wkday(D[i]); let w = wk.get(mon);
+      if (!w) { w = [O[i], H[i], L[i], C[i], i]; wk.set(mon, w); }
+      w[1] = Math.max(w[1], H[i]); w[2] = Math.min(w[2], L[i]); w[3] = C[i]; w[4] = i; }
+    let WM = [...wk.keys()].sort((a, b) => a - b);
+    let formingWeek = null;
+    if (WM.length && nowS < (WM[WM.length - 1] + 4) * DAY + 22 * 3600) { const lw = WM[WM.length - 1]; formingWeek = [lw, wk.get(lw)]; WM = WM.slice(0, -1); }
+    const WC = WM.map(w => wk.get(w)[3]), WH = WM.map(w => wk.get(w)[1]), WL = WM.map(w => wk.get(w)[2]);
+    const WS = {}; for (const k of [20, 50, 100, 200]) WS[k] = sma(WC, k);
+    const WR = rsi(WC);
+    const widxOfMon = new Map(WM.map((w, j) => [w, j]));
+    const wkEnd = new Map(); WM.forEach((w, j) => { if (wk.get(w)[4] != null) wkEnd.set(j, wk.get(w)[4]); });
+    const ds = i => iso(D[i]), wds = j => iso(WM[j] + 6);
+
+    function readAt(j) { const c = WC[j], w50 = WS[50][j], w100 = WS[100][j]; if (w50 == null || w100 == null) return null;
+      const i = wkEnd.has(j) ? wkEnd.get(j) : null;
+      if (c < w100) { if (i != null && i >= 266) { const lo20 = mn(C, i - 13, i + 1), prior = mn(C, i - 266, i - 14);
+          const held = lo20 <= prior * 1.02 && C[i] >= lo20 * 1.05;
+          const back = (S[20][i] && C[i] > S[20][i]) || (S[50][i] && C[i] > S[50][i]);
+          if (held && back) return 'Bear, possibly ending'; }
+        return 'Bear'; }
+      if (c < w50) return 'Turning bear'; if (w50 < w100) return 'Turning bull'; return 'Bull'; }
+    const reads = WM.map((_, j) => readAt(j));
+    const changes = []; let prev = null; const chJ = [];
+    reads.forEach((r, j) => { if (r && r !== prev) { changes.push({ week: wds(j), read: r, close: r2(WC[j]) }); chJ.push(j); prev = r; } });
+    changes.forEach((ch, k) => { const nxt = k + 1 < changes.length; const j0 = chJ[k], j1 = nxt ? chJ[k + 1] : WM.length - 1;
+      ch.weeks = j1 - j0; ch.to_next = r2(pct(WC[j1], WC[j0]), 1); ch.max_up = r2(pct(mx(WC, j0, j1 + 1), WC[j0]), 1); ch.max_dn = r2(pct(mn(WC, j0, j1 + 1), WC[j0]), 1); ch.open = !nxt; });
+    const jl = WM.length - 1, il = n - 1;
+    const lo20 = mn(C, il - 13, il + 1), prior365 = il > 40 ? mn(C, Math.max(0, il - 266), il - 14) : null;
+    const gt = (a, b) => b ? a > b : null;
+    const checklist = [
+      ['Weekly close vs 100W', gt(WC[jl], WS[100][jl]), r2(WC[jl]), r2(WS[100][jl])],
+      ['50W vs 100W', WS[100][jl] ? WS[50][jl] > WS[100][jl] : null, r2(WS[50][jl]), r2(WS[100][jl])],
+      ['Weekly close vs 50W', gt(WC[jl], WS[50][jl]), r2(WC[jl]), r2(WS[50][jl])],
+      ['Weekly close vs 20W', gt(WC[jl], WS[20][jl]), r2(WC[jl]), r2(WS[20][jl])],
+      ['Weekly close vs 200W', gt(WC[jl], WS[200][jl]), r2(WC[jl]), r2(WS[200][jl])],
+      ['Daily close vs 50D', C[il] > S[50][il], r2(C[il]), r2(S[50][il])],
+      ['Daily close vs 20D', C[il] > S[20][il], r2(C[il]), r2(S[20][il])],
+      ['Held near the prior-year low', (prior365 != null && lo20 <= prior365 * 1.02 && C[il] >= lo20 * 1.05), r2(lo20), r2(prior365)],
+    ];
+    const last8 = []; for (let j = Math.max(0, jl - 7); j <= jl; j++) last8.push({ week: wds(j), read: reads[j], close: r2(WC[j]) });
+
+    function wkCrossDay(i0, iEnd, k, d) { let seen = false;
+      for (let j = 0; j < WM.length; j++) { if (!wkEnd.has(j)) continue; const ie = wkEnd.get(j); if (ie < i0) continue; if (ie > iEnd) break;
+        const lv = WS[k][j]; if (lv == null) continue; if (d * (WC[j] - lv) <= 0) seen = true; else if (seen) return ie; }
+      return null; }
+    function crossDay(i0, iEnd, val, d) { let seen = false;
+      for (let i = i0; i <= iEnd; i++) { const v = val[i]; if (v == null) continue; if (d * (C[i] - v) <= 0) seen = true; else if (seen && i > i0) return i; } return null; }
+    function maCrossDay(i0, iEnd, d) { let seen = false;
+      for (let i = i0; i <= iEnd; i++) { const a = S[20][i], b = S[50][i]; if (a == null || b == null) continue; if (d * (a - b) <= 0) seen = true; else if (seen && i > i0) return i; } return null; }
+    function candidates(N, d) { const out = []; for (let i = N; i < n; i++) { if ((d === 1 && C[i] < mn(C, i - N, i)) || (d === -1 && C[i] > mx(C, i - N, i))) out.push(i); } return out; }
+    function episodes(cands, N) { const eps = []; for (const k of cands) { if (eps.length && k - eps[eps.length - 1][eps[eps.length - 1].length - 1] <= N) eps[eps.length - 1].push(k); else eps.push([k]); } return eps; }
+
+    const EARLY = ['div', 'div10', 'keyrev', 'c10', 'swing', 'c20'];
+    function earlySigns(k, prevlow, d, limit) { const res = {};
+      let div = false; if (prevlow != null && R[k] != null && R[prevlow] != null) div = d * (C[k] - C[prevlow]) < 0 && d * (R[k] - R[prevlow]) > 0;
+      res.div = div ? k : null;
+      const refHL = d === 1 ? H[k] : L[k];
+      const swingLv = k >= 5 ? (d === 1 ? mx(C, k - 5, k) : mn(C, k - 5, k)) : null;
+      for (let i = k + 1; i <= limit; i++) {
+        if (!('c10' in res) && S[10][i] && d * (C[i] - S[10][i]) > 0) res.c10 = i;
+        if (!('c20' in res) && S[20][i] && d * (C[i] - S[20][i]) > 0) res.c20 = i;
+        if (!('keyrev' in res) && d * (C[i] - refHL) > 0) res.keyrev = i;
+        if (!('swing' in res) && swingLv != null && d * (C[i] - swingLv) > 0) res.swing = i; }
+      res.div10 = div ? (res.c10 ?? null) : null;
+      for (const s of EARLY) if (!(s in res)) res[s] = null;
+      return [res, swingLv, refHL]; }
+    function outcome(k, i, d, thr, hh, hold_, after = 21) {
+      let hit = false; for (let x = k + 1; x < Math.min(n, k + hh + 1); x++) if (d * (C[x] / C[k] - 1) * 100 >= thr) { hit = true; break; }
+      const hitKnown = k + hh < n || hit;
+      let hold = true; for (let x = i + 1; x < Math.min(n, i + hold_ + 1); x++) if (!(d * (C[x] - C[k]) >= 0)) { hold = false; break; }
+      const holdKnown = i + hold_ < n || !hold;
+      const p30 = i + after < n ? pct(C[i + after], C[i]) : null;
+      return { hit: hitKnown ? hit : null, hold: holdKnown ? hold : null, days: D[i] - D[k], move: pct(C[i], C[k]), p30 }; }
+    function statsOf(v, d, withP30) {
+      const hits = v.map(x => x.hit).filter(x => x != null), holds = v.map(x => x.hold).filter(x => x != null);
+      const o = { seen: v.length, hit: hits.length ? r2(100 * hits.filter(Boolean).length / hits.length, 0) : null,
+        hold: holds.length ? r2(100 * holds.filter(Boolean).length / holds.length, 0) : null,
+        days: r2(med(v.map(x => x.days)), 0), move: r2(med(v.map(x => x.move)), 1) };
+      if (withP30) { const p30 = v.map(x => x.p30).filter(x => x != null); o.p30 = r2(med(p30), 1); o.p30up = p30.length ? r2(100 * p30.filter(x => d * x > 0).length / p30.length, 0) : null; }
+      return o; }
+    function earlyTable(d) { const N = 21; const cands = candidates(N, d), eps = episodes(cands, N);
+      const rows = {}; for (const s of EARLY.concat(['base'])) rows[s] = [];
+      let prevEp = null;
+      for (const ep of eps) { const used = new Set();
+        ep.forEach((k, ix) => { const nxt = ix + 1 < ep.length ? ep[ix + 1] : null;
+          const limit = Math.min(n - 1, k + 21, nxt ? nxt - 1 : n);
+          const [res] = earlySigns(k, prevEp, d, limit);
+          for (const s of EARLY) { if (used.has(s) || res[s] == null) continue; used.add(s); rows[s].push(outcome(k, res[s], d, 10, 42, 42)); } });
+        const kf = ep[ep.length - 1]; rows.base.push(outcome(kf, kf, d, 10, 42, 42)); prevEp = kf; }
+      const stats = {}; for (const s in rows) stats[s] = statsOf(rows[s], d, true);
+      const k = cands.length ? cands[cands.length - 1] : null; let cur = null;
+      if (k != null) { const ei = eps.findIndex(e => e.includes(k)); const prv = ei > 0 ? eps[ei - 1][eps[ei - 1].length - 1] : null;
+        const [res, swingLv, refHL] = earlySigns(k, prv, d, Math.min(n - 1, k + 21));
+        const fired = {}; for (const s of EARLY) fired[s] = res[s] != null ? { date: ds(res[s]), price: r2(C[res[s]]), pct: r2(pct(C[res[s]], C[k]), 1) } : null;
+        cur = { date: ds(k), price: r2(C[k]), days_ago: D[n - 1] - D[k], live: (n - 1 - k) <= 21, rsi: r2(R[k], 1),
+          prev_date: prv != null ? ds(prv) : null, prev_price: prv != null ? r2(C[prv]) : null, prev_rsi: prv != null ? r2(R[prv], 1) : null,
+          div: res.div != null, fired, levels: { c10: r2(S[10][n - 1]), c20: r2(S[20][n - 1]), keyrev: r2(refHL), swing: r2(swingLv) }, now_pct: r2(pct(C[n - 1], C[k]), 1) }; }
+      let best = null; for (const s of EARLY) { if (stats[s].seen >= 3 && stats[s].hit != null && (best == null || stats[s].hit > stats[best].hit)) best = s; }
+      return { stats, current: cur, best }; }
+
+    const SW = ['c20', 'c50', 'x2050', 'w20', 'c200', 'w50'];
+    const swingSigns = (k, d, limit) => ({ c20: crossDay(k, limit, S[20], d), c50: crossDay(k, limit, S[50], d), x2050: maCrossDay(k, limit, d),
+      w20: wkCrossDay(k, limit, 20, d), c200: crossDay(k, limit, S[200], d), w50: wkCrossDay(k, limit, 50, d) });
+    function swingTable(d, pivots) { const N = 63; const cands = candidates(N, d), eps = episodes(cands, N);
+      const opp = pivots.filter(p => p.type === (d === 1 ? 'top' : 'bottom')).map(p => p.i);
+      const rows = {}; for (const s of SW) rows[s] = [];
+      for (const ep of eps) { const used = new Set();
+        ep.forEach((k, ix) => { const nxt = ix + 1 < ep.length ? ep[ix + 1] : null; const no = opp.find(x => x > k); const nopp = no === undefined ? null : no;
+          const limit = Math.min(n - 1, k + 252, nxt ? nxt - 1 : n, nopp ? nopp : n);
+          const res = swingSigns(k, d, limit);
+          for (const s of SW) { if (used.has(s) || res[s] == null) continue; used.add(s); rows[s].push(outcome(k, res[s], d, 20, 126, 84)); } }); }
+      const stats = {}; for (const s in rows) stats[s] = statsOf(rows[s], d, false);
+      const lastOpp = opp.length ? Math.max(...opp) : -1; let k = null, stale = false;
+      if (cands.length) { const after = cands.filter(c => c > lastOpp); k = after.length ? after[after.length - 1] : cands[cands.length - 1]; stale = !after.length; }
+      let cur = null;
+      if (k != null) { const res = swingSigns(k, d, n - 1); const fired = {};
+        for (const s of SW) fired[s] = res[s] != null ? { date: ds(res[s]), price: r2(C[res[s]]), pct: r2(pct(C[res[s]], C[k]), 1) } : null;
+        cur = { date: ds(k), price: r2(C[k]), fired, n: SW.filter(s => res[s] != null).length, now_pct: r2(pct(C[n - 1], C[k]), 1),
+          levels: { c20: r2(S[20][n - 1]), c50: r2(S[50][n - 1]), x2050: r2(S[50][n - 1]), w20: r2(WS[20][jl]), c200: r2(S[200][n - 1]), w50: r2(WS[50][jl]) },
+          days_ago: D[n - 1] - D[k], stale }; }
+      return { stats, current: cur }; }
+
+    // swings
+    const Wn = 13, Wd = 63; const raw = [];
+    for (let j = 0; j < WC.length; j++) { if (wkEnd.has(j)) continue; const a = Math.max(0, j - Wn), b = Math.min(WC.length, j + Wn + 1);
+      const t = WC[j] === mx(WC, a, b) ? 'top' : (WC[j] === mn(WC, a, b) ? 'bottom' : null); if (t) raw.push([WM[j] + 6, WC[j], t, j, null]); }
+    for (let i = 0; i < n; i++) { const a = Math.max(0, i - Wd), b = Math.min(n, i + Wd + 1);
+      const t = C[i] === mx(C, a, b) ? 'top' : (C[i] === mn(C, a, b) ? 'bottom' : null); if (!t) continue;
+      const mon = D[i] - wkday(D[i]);
+      if (i < Wd) { const prior = []; for (let j = 0; j < WM.length; j++) if (WM[j] < mon && mon - WM[j] <= 91) prior.push(WC[j]);
+        if (prior.length && ((t === 'top' && Math.max(...prior) > C[i]) || (t === 'bottom' && Math.min(...prior) < C[i]))) continue; }
+      raw.push([D[i], C[i], t, widxOfMon.has(mon) ? widxOfMon.get(mon) : WM.length - 1, i]); }
+    raw.sort((x, y) => x[0] - y[0]);
+    const alt = [];
+    for (const r of raw) { const la = alt[alt.length - 1];
+      if (la && la[2] === r[2]) { if ((r[2] === 'top' && r[1] > la[1]) || (r[2] === 'bottom' && r[1] < la[1])) alt[alt.length - 1] = r; } else alt.push(r); }
+    const pivots = [];
+    for (const [, , t, j, i] of alt) { let conf, cyc;
+      if (i !== null) { conf = i + Wd < n; const a = Math.max(0, i - 252), b = Math.min(n, i + 253);
+        cyc = (t === 'top' && C[i] === mx(C, a, b)) || (t === 'bottom' && C[i] === mn(C, a, b));
+        const pre = []; for (let x = 0; x < WM.length; x++) { const dd = D[i] - (WM[x] + 6); if (dd >= 1 && dd < 366 && !wkEnd.has(x)) pre.push(WC[x]); }
+        if (pre.length && ((t === 'top' && Math.max(...pre) > C[i]) || (t === 'bottom' && Math.min(...pre) < C[i]))) cyc = false; }
+      else { conf = j + Wn < WC.length; const a = Math.max(0, j - 52), b = Math.min(WC.length, j + 53);
+        cyc = (t === 'top' && WC[j] === mx(WC, a, b)) || (t === 'bottom' && WC[j] === mn(WC, a, b)); }
+      pivots.push({ j, type: t, confirmed: conf, cycle: cyc && conf, i }); }
+    function wkCrossFrom(j0, jEnd, k, d) { let seen = false;
+      for (let j = j0; j <= jEnd; j++) { const lv = WS[k][j]; if (lv == null) continue; if (d * (WC[j] - lv) <= 0) seen = true; else if (seen && j > j0) return j; } return null; }
+    const swingRows = [];
+    pivots.forEach((p, ix) => { const j = p.j, d = p.type === 'bottom' ? 1 : -1; const nxt = ix + 1 < pivots.length ? pivots[ix + 1] : null;
+      const jlim = nxt ? nxt.j : WC.length - 1; const price = p.i !== null ? C[p.i] : WC[j]; const date = p.i !== null ? ds(p.i) : wds(j);
+      const wcell = x => x != null ? { date: wds(x), pct: r2(pct(WC[x], price), 1) } : null;
+      const row = { type: p.type, cycle: p.cycle, date, price: r2(price), confirmed: p.confirmed, daily: p.i !== null, star: null, fast: null, c20: null, c50: null,
+        w20: wcell(wkCrossFrom(j, jlim, 20, d)), w50: wcell(wkCrossFrom(j, jlim, 50, d)) };
+      if (p.i !== null) { const i = p.i; const ilim = nxt && nxt.i !== null ? nxt.i : n - 1;
+        let prevsame = null; for (let q = ix - 1; q >= 0; q--) if (pivots[q].type === p.type && pivots[q].i !== null) { prevsame = pivots[q].i; break; }
+        const [res] = earlySigns(i, prevsame, d, Math.min(ilim, i + 21, n - 1));
+        const cell = x => x != null ? { date: ds(x), pct: r2(pct(C[x], C[i]), 1) } : null;
+        row.star = cell(res.swing); row.fast = EARLY.filter(s => res[s] != null).length;
+        row.c20 = cell(crossDay(i, ilim, S[20], d)); row.c50 = cell(crossDay(i, ilim, S[50], d)); }
+      let np, nd; if (nxt) { np = nxt.i !== null ? C[nxt.i] : WC[nxt.j]; nd = nxt.i !== null ? D[nxt.i] : WM[nxt.j] + 6; } else { np = C[n - 1]; nd = D[n - 1]; }
+      const d0 = p.i !== null ? D[p.i] : WM[j] + 6;
+      Object.assign(row, { next_days: nd - d0, next_pct: r2(pct(np, price), 1), next_price: r2(np), open: !nxt });
+      swingRows.push(row); });
+    swingRows.reverse();
+    const dpiv = pivots.filter(p => p.i !== null).map(p => ({ i: p.i, type: p.type }));
+    const bottom = { early: earlyTable(1), swing: swingTable(1, dpiv) }, top = { early: earlyTable(-1), swing: swingTable(-1, dpiv) };
+    function wdiv(d) { const a = Math.max(0, jl - 104); const rng = []; for (let j = a; j < jl; j++) if (WR[j] != null) rng.push(j); if (!rng.length) return null;
+      let jj = rng[0]; for (const j of rng) if (d * WC[j] < d * WC[jj]) jj = j;
+      const near = Math.abs(pct(WC[jl], WC[jj])) <= 3;
+      return { prior_week: wds(jj), prior_close: r2(WC[jj]), prior_rsi: r2(WR[jj], 1), now_close: r2(WC[jl]), now_rsi: r2(WR[jl], 1), near,
+        div: near && d * (WC[jl] - WC[jj]) <= 0 && d * (WR[jl] - WR[jj]) > 0 }; }
+    bottom.wdiv = wdiv(1); top.wdiv = wdiv(-1);
+    function lastcross(series, lv) { for (let j = jl; j > 0; j--) { const a = lv[j], b = lv[j - 1]; if (a == null || b == null) return null;
+      if ((series[j] > a) !== (series[j - 1] > b)) return { date: wds(j), price: r2(series[j]), dir: series[j] > a ? 'above' : 'below' }; } return null; }
+    let fw = null;
+    if (formingWeek) { const [mon, w] = formingWeek; const fc = forming != null ? fd[3] : w[3]; const wc2 = WC.concat([fc]); const sm = {};
+      for (const k of [20, 50, 100, 200]) { let s = 0; for (let x = wc2.length - k; x < wc2.length; x++) s += wc2[x]; sm[k] = wc2.length >= k ? r2(s / k) : null; }
+      fw = { week: iso(mon + 6), close: r2(fc), sma: sm }; }
+    function x50_100() { for (let j = jl; j > 0; j--) { const a = WS[50][j], b = WS[100][j], a0 = WS[50][j - 1], b0 = WS[100][j - 1];
+      if (a == null || b == null || a0 == null || b0 == null) return null; if ((a > b) !== (a0 > b0)) return { date: wds(j), state: a > b ? 'bull setup (50W over 100W)' : 'bear setup (50W under 100W)' }; } return null; }
+    function gc() { for (let i = n - 1; i > 0; i--) { const a = S[50][i], b = S[200][i], a0 = S[50][i - 1], b0 = S[200][i - 1];
+      if (a == null || b == null || a0 == null || b0 == null) return null; if ((a > b) !== (a0 > b0)) return { date: ds(i), state: a > b ? 'golden cross' : 'death cross' }; } return null; }
+    const smaObj = (arr, i) => { const o = {}; for (const k of [20, 50, 100, 200]) o[k] = r2(arr[k][i]); return o; };
+    const now = { daily: { date: ds(il), close: r2(C[il]), sma: smaObj(S, il) }, weekly: { week: wds(jl), close: r2(WC[jl]), sma: smaObj(WS, jl) }, forming: fw,
+      notes: { w100: lastcross(WC, WS[100]), w200: lastcross(WC, WS[200]), w50: lastcross(WC, WS[50]), x50_100: x50_100(), d50_200: gc() } };
+
+    // phases
+    const cyc = pivots.filter(p => p.cycle && p.confirmed); const calt = [];
+    for (const p of cyc) { const la = calt[calt.length - 1];
+      if (la && la.type === p.type) { if ((p.type === 'top' && WC[p.j] > WC[la.j]) || (p.type === 'bottom' && WC[p.j] < WC[la.j])) calt[calt.length - 1] = p; } else calt.push(p); }
+    const segs = []; for (let x = 0; x + 1 < calt.length; x++) segs.push([[calt[x].j, calt[x + 1].j], calt[x].type === 'bottom' ? 'Bull' : 'Bear']);
+    if (calt.length) { const a = calt[calt.length - 1]; segs.push([[a.j, WC.length - 1], (a.type === 'bottom' ? 'Bull' : 'Bear') + ' (open)']);
+      const conf = pivots.filter(p => p.confirmed); const lp = conf.length ? conf[conf.length - 1] : null;
+      if (lp && lp.j > a.j) segs.push([[lp.j, WC.length - 1], (lp.type === 'bottom' ? 'Rally' : 'Drop') + ' (now)']); }
+    function behav(i0, i1, cl, hi, lo, sm) { let above = 0, tot = 0, sup = 0, supn = 0, res = 0, resn = 0;
+      for (let i = Math.max(i0, 1); i <= i1; i++) { const v = sm[i], pv = sm[i - 1]; if (v == null || pv == null) continue; tot++; if (cl[i] > v) above++;
+        if (cl[i - 1] > pv && lo[i] <= v * 1.01) { supn++; if (cl[i] > v) sup++; }
+        if (cl[i - 1] < pv && hi[i] >= v * 0.99) { resn++; if (cl[i] < v) res++; } }
+      if (!tot) return null; return { above: r2(100 * above / tot, 0), sup: [sup, supn], res: [res, resn], n: tot }; }
+    const phases = [];
+    for (const [[j0, j1], nm] of segs) { const ph = { name: nm, from: wds(j0), to: wds(j1), chg: r2(pct(WC[j1], WC[j0]), 1) };
+      ph.weekly = {}; for (const k of [20, 50, 100, 200]) ph.weekly[k] = behav(j0, j1, WC, WH, WL, WS[k]);
+      let i0 = null; for (let i = 0; i < n; i++) if (D[i] >= WM[j0]) { i0 = i; break; }
+      let i1 = null; for (let i = 0; i < n; i++) if (D[i] <= WM[j1] + 6) i1 = i;
+      if (i0 != null && i1 != null && i1 > i0) { ph.daily_from = ds(i0); ph.daily = {}; for (const k of [20, 50, 100, 200]) ph.daily[k] = behav(i0, i1, C, H, L, S[k]);
+        let st = 0, rv = 0, tt = 0; for (let i = i0; i <= i1; i++) { const v = [S[20][i], S[50][i], S[100][i], S[200][i]]; if (v.some(x => x == null)) continue; tt++;
+          if (v[0] > v[1] && v[1] > v[2] && v[2] > v[3]) st++; if (v[0] < v[1] && v[1] < v[2] && v[2] < v[3]) rv++; }
+        ph.stack = tt ? [r2(100 * st / tt, 0), r2(100 * rv / tt, 0)] : null; }
+      else { ph.daily = null; ph.stack = null; }
+      phases.push(ph); }
+
+    let athI = 0; for (let i = 1; i < n; i++) if (C[i] > C[athI]) athI = i; const ath = C[athI];
+    let y0 = 0; for (let i = 0; i < n; i++) if (yearOf(D[i]) === yearOf(D[il])) { y0 = i; break; }
+    const ytdBase = y0 > 0 ? C[y0 - 1] : C[0];
+    let m0 = 0; for (let i = 0; i < n; i++) if (yearOf(D[i]) === yearOf(D[il]) && monthOf(D[i]) === monthOf(D[il])) { m0 = i; break; }
+    const mtdBase = m0 > 0 ? C[m0 - 1] : C[0];
+    const head = { name, price: r2(C[il]), date: ds(il), ytd: r2(pct(C[il], ytdBase), 1), mtd: r2(pct(C[il], mtdBase), 1), ath: r2(ath), ath_date: ds(athI),
+      from_ath: r2(pct(C[il], ath), 1), first_day: ds(0), days: n, first_week: wds(0), weeks: WM.length, forming_day: forming != null ? iso(forming) : null,
+      rsi_d: r2(R[il], 1), rsi_w: r2(WR[jl], 1) };
+    const spark = { d: [], w: [] }; for (let i = Math.max(0, n - 400); i < n; i++) spark.d.push([ds(i), r2(C[i])]);
+    for (let j = 0; j < WM.length; j++) spark.w.push([wds(j), r2(WC[j]), r2(WS[50][j]), r2(WS[100][j]), r2(WS[200][j])]);
+    return { head, read: { now: reads[jl], checklist, last8, changes }, bottom, top, swings: swingRows, now, phases, chart: spark };
+  }
+  const api = { build };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.MetalEngine = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+{
+let DATA=null, M='gold';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf=v=>v==null?'—':Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pf=v=>v==null?'—':(v>0?'+':'')+Number(v).toFixed(1)+'%';
+const dt=s=>{if(!s)return'—';const d=new Date(s+'T00:00:00Z');return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})};
+const pc=(a,b)=>a==null||!b?null:(a/b-1)*100;
+const yes=v=>v==null?'<span class="m">—</span>':v?'<span class="ok">✓</span>':'<span class="no">✗</span>';
+const few=n=>n<10?' <span class="m">few cases</span>':'';
+const rc=r=>!r?'':r.includes('ending')?'r-ending':r.startsWith('Turning')?'r-Turning':'r-'+r;
+const NM={gold:'Gold',silver:'Silver'};
+const addD=(s,k)=>new Date(Date.parse(s+'T00:00:00Z')+k*864e5).toISOString().slice(0,10);
+const mon=s=>new Date(s+'T00:00:00Z').toLocaleDateString('en-GB',{month:'long',timeZone:'UTC'});
+
+function lbl(s,side){const up=side==='bottom';const x=up?'low':'high';
+  return {div:'RSI divergence at the '+x+' (setup)',div10:'Divergence, then a close '+(up?'above':'below')+' the 10D',
+  keyrev:'Key reversal: close '+(up?'above the low':'below the high')+' day\'s '+(up?'high':'low'),c10:'Daily close '+(up?'above':'below')+' the 10D',
+  swing:'★ Swing break: close '+(up?'above the highest':'below the lowest')+' close of the 5 sessions before the '+x,c20:'Daily close '+(up?'above':'below')+' the 20D',
+  base:'Baseline: any 30-day '+x+', no sign',
+  s_c20:'Daily close '+(up?'above':'below')+' the 20D',s_c50:'Daily close '+(up?'above':'below')+' the 50D',s_x2050:'20D crosses '+(up?'over':'under')+' the 50D',
+  s_w20:'Weekly close '+(up?'above':'below')+' the 20W',s_c200:'Daily close '+(up?'above':'below')+' the 200D',s_w50:'Weekly close '+(up?'above':'below')+' the 50W'}[s]}
+
+function head(){const r=DATA[M],h=r.head;
+  $('readpill').textContent=r.read.now;$('readpill').className='read '+rc(r.read.now);
+  const ck=r.read.checklist, w100=ck[0][3], c=h.price;
+  const t={Bear:'the weekly close is under the 100W',
+    'Bear, possibly ending':'under the 100W but holding the prior-year low',
+    'Turning bear':'the weekly close lost the 50W, the 100W still holds',
+    'Turning bull':'back above both weekly averages, the 50W still under the 100W',
+    Bull:'above the 50W and 100W, the 50W leading'}[r.read.now]||'';
+  $('title').textContent=NM[M]+' is in a '+r.read.now.toLowerCase()+' read: '+t;
+  $('lead').textContent='Last closed day '+dt(h.date)+' at '+nf(c)+', '+pf(h.from_ath)+' from the '+dt(h.ath_date)+' high of '+nf(h.ath)+'. The weekly close is '+pf(pc(c,w100))+' from the 100W ('+nf(w100)+') and '+pf(pc(c,ck[4][3]))+' from the 200W ('+nf(ck[4][3])+').';
+  $('figs').innerHTML=[['Price',nf(c),'close '+dt(h.date)],['YTD',pf(h.ytd),'since 31 Dec '+(+h.date.slice(0,4)-1)],['MTD',pf(h.mtd),'since '+dt(addD(h.date.slice(0,8)+'01',-1)).replace(/ \d{4}$/,'')],['From ATH',pf(h.from_ath),nf(h.ath)+' · '+dt(h.ath_date)],['RSI 14 daily',h.rsi_d,'Wilder'],['RSI 14 weekly',h.rsi_w,'Wilder']].map(f=>'<div><b>'+esc(f[1])+'</b><span>'+esc(f[0])+' · '+esc(f[2])+'</span></div>').join('');
+}
+
+function chart(){if(!DATA)return;const s=$("svg"),W=s.clientWidth,H=s.clientHeight;if(!W||!H)return;const r=DATA[M];
+  const w=r.chart.w, pad={l:52,r:10,t:10,b:24};const vals=w.flatMap(x=>[x[1],x[2],x[3],x[4]]).filter(v=>v);
+  const lo=Math.log(Math.min(...vals)*0.95),hi=Math.log(Math.max(...vals)*1.03);
+  const X=i=>pad.l+i*(W-pad.l-pad.r)/(w.length-1),Y=v=>pad.t+(hi-Math.log(v))*(H-pad.t-pad.b)/(hi-lo);
+  const line=(k,col,wd)=>{let d='',on=false;w.forEach((x,i)=>{if(x[k]==null){on=false;return}d+=(on?'L':'M')+X(i).toFixed(1)+','+Y(x[k]).toFixed(1);on=true});return '<path class="ln" d="'+d+'" fill="none" stroke="'+col+'" stroke-width="'+wd+'"/>'};
+  let g='';const ticks=[];const step=Math.pow(10,Math.floor(Math.log10(Math.exp(hi))));
+  for(const m of [1,1.5,2,3,5,7]){for(let v=step/100*m;v<Math.exp(hi)*1.01;v*=10)if(v>Math.exp(lo))ticks.push(v)}
+  ticks.sort((a,b)=>a-b).filter((v,i,a)=>W>520||i%2===0).forEach(v=>{g+='<line x1="'+pad.l+'" x2="'+(W-pad.r)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)"/><text x="'+(pad.l-6)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--mute)">'+(v>=1000?(v/1000)+'k':v)+'</text>'});
+  let yr=null;w.forEach((x,i)=>{const y=x[0].slice(0,4);if(y!==yr&&(+y)%(W<520?4:2)===0){g+='<text x="'+X(i)+'" y="'+(H-6)+'" font-size="11" fill="var(--mute)" text-anchor="middle">'+y+'</text>'}yr=y});
+  g+=line(4,'#8a8f96',1.5)+line(3,'#3f7fbf',1.5)+line(2,'#d08a1e',1.5)+line(1,'var(--ink)',1.8);
+  const idx=d=>{let b=0;for(let i=0;i<w.length;i++){if(w[i][0]<=d)b=i;else break}return Math.min(b+1,w.length-1)};
+  r.swings.filter(x=>x.cycle).forEach(x=>{const i=idx(x.date),top=x.type==='top';const yy=Y(w[i][1])+(top?-8:12);g+='<text x="'+X(i)+'" y="'+yy+'" text-anchor="middle" font-size="11" fill="'+(top?'var(--dn)':'var(--up)')+'">'+(top?'▼':'▲')+'</text>'});
+  g+='<line id="cx" y1="'+pad.t+'" y2="'+(H-pad.b)+'" stroke="var(--mute)" stroke-dasharray="3 3" style="display:none"/>';
+  s.innerHTML=g;
+  s.onpointermove=e=>{const rect=s.getBoundingClientRect(),px=e.clientX-rect.left;const i=Math.max(0,Math.min(w.length-1,Math.round((px-pad.l)/(W-pad.l-pad.r)*(w.length-1))));const x=w[i];const cx=$('cx');cx.setAttribute('x1',X(i));cx.setAttribute('x2',X(i));cx.style.display='';
+    const t=$('tip');t.style.display='block';t.textContent='Week to '+dt(x[0])+': '+nf(x[1])+'  ·  50W '+nf(x[2])+'  ·  100W '+nf(x[3])+'  ·  200W '+nf(x[4]);
+    const tw=t.offsetWidth;t.style.left=Math.max(0,Math.min(W-tw,X(i)-tw/2))+'px';t.style.top='0px'};
+  s.onpointerleave=()=>{$('tip').style.display='none';const cx=$('cx');if(cx)cx.style.display='none'};
+}
+const ro=new ResizeObserver(chart);ro.observe($('svg'));
+
+function readSec(){const r=DATA[M],R=r.read,ch=R.changes;
+  const cur=ch[ch.length-1],prev=[...ch].slice(0,-1).reverse().find(c=>c.read===R.now);
+  const below200=!R.checklist[4][1];
+  let line='Read: <b>'+esc(R.now)+'</b> since the week to '+esc(dt(cur.week))+' (close '+nf(cur.close)+'). ';
+  if(prev)line+='The last time it read '+esc(R.now)+' was the week to '+esc(dt(prev.week))+' at '+nf(prev.close)+'; that call lasted '+prev.weeks+' weeks and price was '+pf(prev.to_next)+' by the next change (worst '+pf(prev.max_dn)+', best '+pf(prev.max_up)+'). ';
+  line+=below200?'It is also below the 200W.':'It is still above the 200W ('+nf(R.checklist[4][3])+'), so this is a bear read inside a long uptrend, not a 2015-style collapse below every average.';
+  $('readline').innerHTML=line;
+  $('check').innerHTML='<thead><tr><th>Check</th><th>Pass</th><th>Value</th><th>Level</th></tr></thead><tbody>'+R.checklist.map(c=>'<tr><td>'+esc(c[0])+'</td><td>'+yes(c[1])+'</td><td>'+nf(c[2])+'</td><td>'+nf(c[3])+'</td></tr>').join('')+'</tbody>';
+  $('check').rows[8]&&($('check').rows[8].cells[2].title='20-day low',$('check').rows[8].cells[3].title='prior-year low');
+  $('last8').innerHTML=R.last8.map(x=>'<span class="chip"><b>'+esc(dt(x.week))+'</b>'+esc(x.read||'—')+' · '+nf(x.close)+'</span>').join('');
+  const grp={};ch.slice(0,-1).forEach(c=>{(grp[c.read]=grp[c.read]||[]).push(c)});
+  const md=a=>{a=a.slice().sort((x,y)=>x-y);return a.length?a[Math.floor((a.length-1)/2)]:null};
+  $('record').innerHTML=['Bear','Turning bear','Turning bull','Bull'].filter(k=>grp[k]).map(k=>{const a=grp[k];const lasting=a.filter(c=>c.weeks>=8).length;return '<b>'+k+'</b>: '+a.length+' calls, median '+md(a.map(c=>c.weeks))+' weeks, '+lasting+' lasted 8+ weeks, median move to the next change '+pf(md(a.map(c=>c.to_next)))}).join('<br>')+'<br>The read flips often around the 100W: most calls end within a few weeks. Calls that held for 8+ weeks are the ones that matched real trends.';
+  $('changes').innerHTML='<thead><tr><th>Week to</th><th>Read</th><th>Weekly close</th><th>Weeks</th><th>To next change</th><th>Worst</th><th>Best</th></tr></thead><tbody>'+ch.slice().reverse().map(c=>'<tr><td>'+esc(dt(c.week))+'</td><td>'+esc(c.read)+'</td><td>'+nf(c.close)+'</td><td>'+(c.open?'open':c.weeks)+'</td><td>'+pf(c.to_next)+'</td><td>'+pf(c.max_dn)+'</td><td>'+pf(c.max_up)+'</td></tr>').join('')+'</tbody>';
+}
+
+function watch(side){const r=DATA[M],w=r[side],e=w.early,s=w.swing,up=side==='bottom',x=up?'low':'high';
+  let h='';const c=e.current;
+  if(c){h+='<h3>Early warning (daily) after the latest 30-day closing '+x+'</h3><p>Latest 30-day closing '+x+': <b>'+nf(c.price)+'</b> on '+esc(dt(c.date))+' ('+c.days_ago+' days before the last close; now '+pf(c.now_pct)+'). ';
+    h+=c.live?'The watch is live.':'No new 30-day '+x+' since then, so these signs belong to that old '+x+' and are no longer live.';
+    if(!up&&r.read.now.startsWith('Bear'))h+=' The read is already Bear, so a top from here would be a relief-rally top, not the cycle top.';
+    h+=' Daily RSI path: previous 30-day '+x+' '+esc(dt(c.prev_date))+' RSI '+(c.prev_rsi??'—')+' → this '+x+' RSI '+(c.rsi??'—')+' ('+(c.div?'divergence':'no divergence')+').</p>';}
+  const rows=['div','div10','keyrev','c10','swing','c20','base'];
+  h+='<div class="scroll"><table class="stack"><thead><tr><th>Sign</th><th>Fired</th><th>Price then</th><th>Then '+(up?'+10%':'−10%')+'</th><th>Held 60 d</th><th>Fires after</th><th>Price by then</th><th>Price 30 d after (up)</th><th>Seen</th></tr></thead><tbody>'+rows.map(k=>{const st=e.stats[k],f=c&&c.fired[k];const nm=(k===e.best?'★ ':'')+lbl(k,side).replace('★ ','');
+    return '<tr'+(k===e.best?' class="star"':'')+'><td>'+esc(nm)+'</td><td>'+(k==='base'?'—':f?esc(dt(f.date)):'<span class="m">not yet</span>')+'</td><td>'+(f?nf(f.price)+' ('+pf(f.pct)+')':'—')+'</td><td>'+(st.hit==null?'—':st.hit+'%')+'</td><td>'+(st.hold==null?'—':st.hold+'%')+'</td><td>'+(st.days==null?'—':st.days+' d')+'</td><td>'+pf(st.move)+'</td><td>'+pf(st.p30)+(st.p30up==null?'':' ('+st.p30up+'%)')+'</td><td>'+st.seen+few(st.seen)+'</td></tr>'}).join('')+'</tbody></table></div>';
+  h+='<p class="note">★ marks the sign with the best "Then '+(up?'+10%':'−10%')+'" record (3+ cases). Then = the price '+(up?'rose':'fell')+' 10% from the '+x+' within 60 days (42 sessions). Held 60 d = no '+(up?'lower':'higher')+' close in the 60 days after the sign. Fires after / Price by then = median days and % from the '+x+' when it fired. Records cover the daily bars only ('+esc(dt(r.head.first_day))+' on).</p>';
+  const sc=s.current;
+  h+='<h3>Swing confirmation (daily + weekly) after the latest 90-day closing '+x+'</h3>';
+  if(sc){h+='<p>90-day closing '+x+': <b>'+nf(sc.price)+'</b> on '+esc(dt(sc.date))+' · <b>'+sc.n+' of 6</b> signs fired · '+x+' → now '+pf(sc.now_pct)+'.'+(sc.stale?' No new 90-day '+x+' since the last opposite turn, so this is the previous episode; it ended with all '+sc.n+' signs fired and the price '+pf(sc.now_pct)+' from that '+x+'.':'')+'</p>';}
+  const sr=['c20','c50','x2050','w20','c200','w50'];
+  h+='<div class="scroll"><table class="stack"><thead><tr><th>Sign</th><th>Fired</th><th>Price then</th><th>Then '+(up?'+20%':'−20%')+'</th><th>'+(up?'Low':'High')+' held 4 mo</th><th>Fires after</th><th>Price by then</th><th>Seen</th></tr></thead><tbody>'+sr.map(k=>{const st=s.stats[k],f=sc&&sc.fired[k],lv=sc&&sc.levels[k];
+    return '<tr><td>'+esc(lbl('s_'+k,side))+'</td><td>'+(f?esc(dt(f.date)):'<span class="m">not yet'+(lv?' · '+nf(lv):'')+'</span>')+'</td><td>'+(f?nf(f.price)+' ('+pf(f.pct)+')':'—')+'</td><td>'+(st.hit==null?'—':st.hit+'%')+'</td><td>'+(st.hold==null?'—':st.hold+'%')+'</td><td>'+(st.days==null?'—':st.days+' d')+'</td><td>'+pf(st.move)+'</td><td>'+st.seen+few(st.seen)+'</td></tr>'}).join('')+'</tbody></table></div>';
+  if(up&&r.read.now.startsWith('Bear')){const ck=r.read.checklist;const lv=[['100W',ck[0][3]],['50W',ck[2][3]]].sort((a,b)=>a[1]-b[1]);
+    h+='<p><b>Cycle line:</b> the read is Bear, so a confirmed low here is a swing low, not the cycle low, until weekly closes come back above the '+lv[0][0]+' ('+nf(lv[0][1])+') and then the '+lv[1][0]+' ('+nf(lv[1][1])+'). In the last cycle: '+cycleExample()+'.</p>';}
+  const wd=w.wdiv;if(wd)h+='<p><b>Weekly RSI divergence:</b> weakest prior week '+(up?'(lowest close, last 2 years)':'(highest close, last 2 years)')+' '+esc(dt(wd.prior_week))+' close '+nf(wd.prior_close)+' RSI '+wd.prior_rsi+' vs this week '+nf(wd.now_close)+' RSI '+wd.now_rsi+'. '+(wd.near?(wd.div?'Divergence is present.':'Within 3% of it, no divergence.'):'Price is not within 3% of that week, so the check does not apply.')+'</p>';
+  $(up?'bwatch':'twatch').innerHTML=h;
+}
+function cycleExample(){const r=DATA[M];const b=r.swings.find(x=>x.cycle&&x.type==='bottom'&&x.confirmed);if(!b)return'no confirmed cycle bottom in the data';return 'the '+dt(b.date)+' low ('+nf(b.price)+') got a weekly close above the 20W on '+(b.w20?dt(b.w20.date):'—')+' and above the 50W on '+(b.w50?dt(b.w50.date):'—')}
+
+function levels(){const r=DATA[M],c=r.head.price,up=[],dn=[];
+  const be=r.bottom.early.current,bs=r.bottom.swing.current,ck=r.read.checklist;
+  if(be&&be.live)['c10','keyrev','c20','swing'].forEach(k=>{if(!be.fired[k]&&be.levels[k])up.push([lbl(k,'bottom'),be.levels[k]])});
+  if(bs)['c20','c50','w20','c200','w50'].forEach(k=>{if(!bs.fired[k]&&bs.levels[k])up.push([lbl('s_'+k,'bottom'),bs.levels[k]])});
+  if(!ck[0][1])up.push(['Weekly close back above the 100W (ends the Bear read)',ck[0][3]]);
+  const seen=new Set();const U=up.filter(x=>{const k=x[0];if(seen.has(k))return false;seen.add(k);return x[1]>c}).sort((a,b)=>a[1]-b[1]);
+  if(be)dn.push(['Close under the latest 30-day low ('+dt(be.date)+') restarts the bottom watch',be.price]);
+  if(ck[7][3])dn.push(['Prior-year low (the "held near the prior low" test)',ck[7][3]]);
+  if(ck[4][1])dn.push(['Weekly close under the 200W',ck[4][3]]);
+  const te=r.top.early.current;if(te&&te.live)['c10','keyrev','c20','swing'].forEach(k=>{if(!te.fired[k]&&te.levels[k])dn.push([lbl(k,'top'),te.levels[k]])});
+  const D=dn.filter(x=>x[1]<c).sort((a,b)=>b[1]-a[1]);
+  const li=x=>'<li><span>'+esc(x[0])+'</span><span>'+nf(x[1])+' <span class="m">('+pf(pc(x[1],c))+')</span></span></li>';
+  $('lvup').innerHTML=U.map(li).join('')||'<li>None</li>';$('lvdn').innerHTML=D.map(li).join('')||'<li>None</li>';
+  return {U,D};
+}
+
+function swingsSec(){const r=DATA[M];
+  const hd='<thead><tr><th>Swing</th><th>Date</th><th>Price</th><th>Early ★</th><th>Fast signs</th><th>20D</th><th>50D</th><th>20W</th><th>50W</th><th>To next swing</th></tr></thead>';
+  const cell=x=>x?esc(dt(x.date))+' <span class="m">'+pf(x.pct)+'</span>':'<span class="m">—</span>';
+  const row=x=>'<tr><td>'+(x.open?'<b>now</b> · ':'')+esc(x.type)+(x.cycle?'<span class="tag">cycle</span>':'')+(x.confirmed?'':' <span class="m">(unconfirmed)</span>')+'</td><td>'+esc(dt(x.date))+'</td><td>'+nf(x.price)+'</td><td>'+(x.daily?cell(x.star):'<span class="m">no daily</span>')+'</td><td>'+(x.fast==null?'—':x.fast+'/6')+'</td><td>'+cell(x.c20)+'</td><td>'+cell(x.c50)+'</td><td>'+cell(x.w20)+'</td><td>'+cell(x.w50)+'</td><td>'+x.next_days+' d · '+pf(x.next_pct)+' · '+nf(x.next_price)+(x.open?' <span class="m">(to now)</span>':'')+'</td></tr>';
+  $('swt').innerHTML=hd+'<tbody>'+r.swings.slice(0,10).map(row).join('')+'</tbody>';
+  $('swall').innerHTML=hd+'<tbody>'+r.swings.map(row).join('')+'</tbody>';
+}
+
+function nowSec(){const r=DATA[M],N=r.now;
+  const rows=[['Daily ('+dt(N.daily.date)+')',N.daily],['Weekly ('+dt(N.weekly.week)+')',N.weekly]];
+  if(N.forming)rows.push(['Forming week',N.forming]);
+  $('smat').innerHTML='<thead><tr><th>Timeframe</th><th>Close</th><th>20</th><th>50</th><th>100</th><th>200</th></tr></thead><tbody>'+rows.map(([n,x])=>'<tr><td>'+esc(n)+'</td><td>'+nf(x.close)+'</td>'+['20','50','100','200'].map(k=>'<td>'+nf(x.sma[k])+' <span class="'+(x.close>x.sma[k]?'ok':'no')+'">'+pf(pc(x.close,x.sma[k]))+'</span></td>').join('')+'</tr>').join('')+'</tbody>';
+  const n=N.notes,f=(o,l)=>o?l+': weekly close '+o.dir+' on the week to '+dt(o.date)+' at '+nf(o.price):l+': no cross in the data';
+  $('notes').innerHTML=[f(n.w100,'100W'),f(n.w200,'200W'),f(n.w50,'50W'),n.x50_100?'50W vs 100W: '+n.x50_100.state+' since the week to '+dt(n.x50_100.date):'',n.d50_200?'Daily 50 vs 200: '+n.d50_200.state+' since '+dt(n.d50_200.date):'','Forming week: '+(N.forming?'shown above, from Monday '+dt(addD(N.forming.week,-6))+' to the last close':'none (the last week is closed)')].filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('');
+}
+
+function phTable(p){const ks=['20','50','100','200'];
+  const rr=(lab,o)=>o?'<tr><td>'+lab+'</td><td>'+o.above+'%</td><td>'+o.sup[0]+'/'+o.sup[1]+(o.sup[1]?' ('+Math.round(100*o.sup[0]/o.sup[1])+'%)':'')+'</td><td>'+o.res[0]+'/'+o.res[1]+(o.res[1]?' ('+Math.round(100*o.res[0]/o.res[1])+'%)':'')+'</td></tr>':'<tr><td>'+lab+'</td><td colspan="3" class="m">not enough data</td></tr>';
+  let h='<h3>'+esc(p.name)+': '+esc(dt(p.from))+' → '+esc(dt(p.to))+' <span class="m">('+pf(p.chg)+')</span></h3>';
+  h+='<div class="scroll"><table class="stack"><thead><tr><th>SMA</th><th>Above</th><th>Support held</th><th>Resistance held</th></tr></thead><tbody>';
+  if(p.daily)h+=ks.map(k=>rr(k+'D',p.daily[k])).join('');
+  h+=ks.map(k=>rr(k+'W',p.weekly[k])).join('')+'</tbody></table></div>';
+  h+='<p class="note">'+(p.daily?'Daily part from '+esc(dt(p.daily_from))+'. ':'No daily bars in this phase. ')+(p.stack?'Stack: '+p.stack[0]+'% of days 20>50>100>200D, '+p.stack[1]+'% reversed.':'')+'</p>';return h}
+function phasesSec(){const P=DATA[M].phases;const main=[];const now=P.filter(p=>p.name.includes('(')),bull=[...P].reverse().find(p=>p.name==='Bull'),bear=[...P].reverse().find(p=>p.name==='Bear');
+  now.forEach(p=>main.push(p));if(bull)main.push(bull);if(bear)main.push(bear);
+  $('phmain').innerHTML='<div class="cols">'+main.map(p=>'<div>'+phTable(p)+'</div>').join('')+'</div>';
+  $('phall').innerHTML='<div class="cols">'+P.map(p=>'<div>'+phTable(p)+'</div>').join('')+'</div>';
+}
+
+function pairSec(){const g=DATA.gold,s=DATA.silver;
+  const rows=[['Read',g.read.now,s.read.now],['Close '+dt(g.head.date),nf(g.head.price),nf(s.head.price)],['From ATH',pf(g.head.from_ath),pf(s.head.from_ath)],['YTD',pf(g.head.ytd),pf(s.head.ytd)],
+   ['vs 100W',pf(pc(g.head.price,g.read.checklist[0][3])),pf(pc(s.head.price,s.read.checklist[0][3]))],['vs 200W',pf(pc(g.head.price,g.read.checklist[4][3])),pf(pc(s.head.price,s.read.checklist[4][3]))],
+   ['Bottom swing signs fired',(g.bottom.swing.current?g.bottom.swing.current.n:0)+'/6',(s.bottom.swing.current?s.bottom.swing.current.n:0)+'/6'],['Latest 30-day low',nf(g.bottom.early.current.price)+' · '+dt(g.bottom.early.current.date),nf(s.bottom.early.current.price)+' · '+dt(s.bottom.early.current.date)],
+   ['Daily RSI / weekly RSI',g.head.rsi_d+' / '+g.head.rsi_w,s.head.rsi_d+' / '+s.head.rsi_w]];
+  $('pairt').innerHTML='<thead><tr><th></th><th>Gold</th><th>Silver</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td></tr>').join('')+'</tbody>';
+  const same=g.read.now===s.read.now;
+  const gd=pc(g.head.price,g.read.checklist[4][3]),sd=pc(s.head.price,s.read.checklist[4][3]);
+  $('pairline').textContent=(same?'They agree: both read '+g.read.now+'. ':'They differ: gold reads '+g.read.now+', silver '+s.read.now+'. ')+'Silver is '+pf(s.head.from_ath)+' from its high against gold’s '+pf(g.head.from_ath)+', and sits only '+pf(sd)+' above its 200W against gold’s '+pf(gd)+'. '+earlyLine(g,s);
+}
+
+function earlyLine(g,s){const f=x=>{const c=x.bottom.early.current;if(!c||!c.live)return null;const k=Object.keys(c.fired).filter(k=>c.fired[k]);return k.length?k.map(k=>lbl(k,'bottom').replace('★ ','').split(':')[0].toLowerCase()).join(', '):''};
+  const a=f(g),b=f(s);if(a===''&&b==='')return 'Neither has fired an early bottom sign since its latest 30-day low.';
+  return 'Since the latest 30-day low, gold has fired '+(a?a:a===''?'no early bottom sign':'—')+'; silver '+(b?b:b===''?'none':'—')+'.'}
+const lc=t=>t.charAt(0).toLowerCase()+t.slice(1);
+function summary(lv){const r=DATA[M],h=r.head,ck=r.read.checklist;const first=lv.U[0];
+  const d200=pc(h.price,ck[4][3]);const where=NM[M]+' is in a '+r.read.now+' read, '+pf(h.from_ath)+' from its '+mon(h.ath_date)+' '+h.ath_date.slice(0,4)+' high and '+pf(d200)+' from the 200W ('+nf(ck[4][3])+'). '+(d200<5?'That is close: a weekly close under the 200W would turn this from a deep correction into a full cycle bear.':'So far it is a deep correction inside a long uptrend, not a full cycle bear below every average.');
+  const watchTxt='Watch first: '+(first?lc(first[0])+' at '+nf(first[1])+' ('+pf(pc(first[1],h.price))+')':'—')+'. On the downside, '+(lv.D[0]?lc(lv.D[0][0])+' at '+nf(lv.D[0][1]):'—')+'.';
+  $('sumtxt').innerHTML='<p>'+esc(where)+'</p><p>'+esc(watchTxt)+'</p>';
+  const m=DATA.meta;
+  $('honest').innerHTML=['Source: '+m.source+'. Built '+m.built+'. Last day used: '+dt(m.last_closed)+'. '+m.note,
+   'Daily bars start '+dt(r.head.first_day)+' ('+r.head.days+' sessions); weekly closes start '+dt(r.head.first_week)+'. Weekly bars are Monday to Sunday, built from the daily bars'+(r.head.first_week<r.head.first_day?'; for the years before the daily data they are TradingView weekly bars':'')+'.',
+   'SMAs are simple averages of closes; RSI is 14-period Wilder. Every sign is a cross: price has to be on the other side of the level after the '+'extreme and the sign fires on the first close beyond it.',
+   'Metals trade 5 days a week, so the template’s calendar windows are converted to sessions: 30 days = 21, 60 = 42, 90 = 63, 4 months = 84, 6 months = 126, a year = 252, the 7 days before an extreme = 5 sessions.',
+   'Past record = every case in the data, medians not averages, one count per 30-day (or 90-day) extreme. Seen under 10 is flagged "few cases" — some daily records are still few cases.',
+   'Spot CFD prices only. Past cycles, not a forecast, and not financial advice.'].map(t=>'<li>'+esc(t)+'</li>').join('');
+}
+
+function render(){document.body.className=M;$('b-gold').setAttribute('aria-pressed',M==='gold');$('b-silver').setAttribute('aria-pressed',M==='silver');
+  $('stale').textContent='Data to '+dt(DATA.meta.last_closed)+' · '+DATA.meta.source+' · built '+DATA.meta.built+'.';
+  head();chart();readSec();watch('bottom');watch('top');const lv=levels();swingsSec();nowSec();phasesSec();pairSec();summary(lv)}
+function setM(m){M=m;try{localStorage.setItem('metalcycle',m)}catch(e){}if(location.hash!=='#'+m)history.replaceState(null,'','#'+m);render()}
+$('b-gold').onclick=()=>setM('gold');$('b-silver').onclick=()=>setM('silver');
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if((h==='gold'||h==='silver')&&h!==M)setM(h)});
+const TV='Trading View',SYM={gold:'TVC:GOLD',silver:'TVC:SILVER'};let MCP=null,DB=null,BUSY=false;
+const msg=(t,err)=>{const e=$('rfmsg');e.textContent=t;e.style.fontWeight=err?'600':'400'};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const ERR={server_not_connected:'Add the TradingView connector in claude.ai Settings → Connectors, then try again.',server_not_found:'Add the TradingView connector in claude.ai Settings → Connectors, then try again.',approval_required:'Approval is needed: press Refresh again and allow it.',not_in_manifest:'This page is not allowed to use TradingView.',selection_required:'Choose which TradingView connector to use, then try again.'};
+async function bars(sym){const res=await MCP.callTool(TV,'mcp-tv-get-ohlcv',{symbol:sym,interval:'1D',count:8000,format:'columns',date_from:'2008-01-01'},{cache:false});
+  let p=res&&res.payload;if(typeof p==='string'){try{p=JSON.parse(p)}catch(e){}}
+  if(!p||p.success===false||!p.bars||!p.bars.t||p.bars.t.length<1500)throw{code:'tool_error',message:(p&&(p.error||p.message))||'TradingView returned too few bars'};
+  return p.bars}
+const sydney=ms=>new Date(ms).toLocaleString('en-AU',{timeZone:'Australia/Sydney',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).replace(/(\d+)\/(\d+)\/(\d+),?/,'$3-$2-$1');
+async function refresh(){if(BUSY||!MCP)return;BUSY=true;const b=$('refresh');b.disabled=true;b.textContent='Refreshing…';
+  const ok=[],bad=[];
+  for(const m of ['gold','silver']){msg('Pulling '+NM[m]+' daily bars from TradingView…');
+    try{const raw=await bars(SYM[m]);DATA[m]=MetalEngine.build(NM[m],raw,Date.now());ok.push(m)}catch(e){bad.push(NM[m]+' ('+((e&&ERR[e.code])||(e&&e.message)||'error')+')')}
+    if(m==='gold')await sleep(1500)}
+  let t='';
+  if(ok.length){const ts=Date.now();DATA.meta={source:'TradingView TVC:GOLD and TVC:SILVER daily bars from Jan 2008',built:sydney(ts)+' Sydney',ts,last_closed:DATA.gold.head.date>DATA.silver.head.date?DATA.gold.head.date:DATA.silver.head.date,
+      note:'Refreshed from the page. Weekly bars are built from the daily bars (Monday to Sunday); a week counts as closed after its Friday 22:00 UTC close.'+(bad.length?' Not updated this time: '+bad.join(', ')+'.':'')};
+    render();t='Updated '+ok.map(m=>NM[m]).join(' and ')+' to the '+dt(DATA[ok[0]].head.date)+' close.';
+    if(DB){try{for(const m of ok)await DB.doc('snap/'+m).set(JSON.parse(JSON.stringify(DATA[m])));await DB.doc('snap/meta').set(DATA.meta);t+=' Saved, so it opens like this next time.'}catch(e){t+=' Not saved for next time (only editors can save).'}}}
+  if(bad.length)t+=(t?' ':'')+'Failed: '+bad.join('; ')+'. Showing the previous data for it.';
+  msg(t,!!bad.length);BUSY=false;b.disabled=false;b.textContent='Refresh from TradingView'}
+async function loadSnap(){if(!DB)return;try{const s=await DB.doc('snap/meta').get();if(!s.exists)return;const meta=s.data();if(!meta||!meta.ts||meta.ts<=(DATA.meta.ts||0))return;
+  const g=await DB.doc('snap/gold').get(),v=await DB.doc('snap/silver').get();if(g.exists)DATA.gold=g.data();if(v.exists)DATA.silver=v.data();DATA.meta=meta;render()}catch(e){}}
+async function initLive(){if(!window.claude||!window.claude.use)return;
+  try{DB=await window.claude.use('db')}catch(e){DB=null}
+  await loadSnap();
+  try{MCP=await window.claude.use('mcp')}catch(e){MCP=null}
+  const b=$('refresh');b.hidden=false;
+  if(!MCP){b.disabled=true;msg('Refresh needs this page open on claude.ai with the TradingView connector.');return}
+  b.onclick=refresh;msg('Pulls both metals (2 calls), rebuilds every section here, about 10 seconds.')}
+fetch('data.json').then(r=>r.json()).then(d=>{DATA=d;let m=location.hash.slice(1);if(m!=='gold'&&m!=='silver'){try{m=localStorage.getItem('metalcycle')}catch(e){}}M=m==='silver'?'silver':'gold';render();initLive()}).catch(e=>{$('title').textContent='Could not load the data file.'});
+}
+</script>
+</body>
+</html>
